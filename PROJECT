@@ -1,0 +1,15 @@
+domain: edge.emqx.io
+layout:
+- go.kubebuilder.io/v3
+projectName: edge-operator
+repo: github.com/emqx/edge-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: edge.emqx.io
+  kind: NeuronEX
+  path: github.com/emqx/edge-operator/api/v1alpha1
+  version: v1alpha1
+version: "3"

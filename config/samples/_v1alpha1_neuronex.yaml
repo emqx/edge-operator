@@ -1,0 +1,12 @@
+apiVersion: edge.emqx.io/v1alpha1
+kind: NeuronEX
+metadata:
+  labels:
+    app.kubernetes.io/name: neuronex
+    app.kubernetes.io/instance: neuronex-sample
+    app.kubernetes.io/part-of: edge-operator
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: edge-operator
+  name: neuronex-sample
+spec:
+  # TODO(user): Add fields here
