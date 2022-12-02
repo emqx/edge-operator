@@ -48,6 +48,11 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
+//+kubebuilder:rbac:groups="",resources=persistentvolumes,verbs=get;list;watch;create;update;patch
+//+kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch
+//+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch
+
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool

@@ -9,4 +9,9 @@ metadata:
     app.kubernetes.io/created-by: edge-operator
   name: neuronex-sample
 spec:
-  # TODO(user): Add fields here
+  neuron:
+    name: neuron
+    image: emqx/neuron:2.2.8
+  ekuiper:
+    name: ekuiper
+    image: lfedge/ekuiper:1.7.1-slim-python 
