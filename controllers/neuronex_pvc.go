@@ -4,6 +4,8 @@ import (
 	"context"
 
 	emperror "emperror.dev/errors"
+	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,8 +14,8 @@ import (
 
 type addPVC struct{}
 
-func (sub addPVC) reconcile(ctx context.Context, r *NeuronEXReconciler, volumeClaimTemplate *corev1.PersistentVolumeClaim) *requeue {
-	for _, pvc := range sub.getClaimList(volumeClaimTemplate) {
+func (sub addPVC) reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue {
+	for _, pvc := range sub.getClaimMap(instance.Spec.VolumeClaimTemplate) {
 		if err := r.Client.Get(ctx, client.ObjectKeyFromObject(pvc), pvc); err != nil {
 			if k8sErrors.IsNotFound(err) {
 				if err := r.Client.Create(ctx, pvc); err != nil {
@@ -26,14 +28,109 @@ func (sub addPVC) reconcile(ctx context.Context, r *NeuronEXReconciler, volumeCl
 	return nil
 }
 
-func (sub addPVC) getClaimList(volumeClaimTemplate *corev1.PersistentVolumeClaim) []*corev1.PersistentVolumeClaim {
+func (sub addPVC) updateDeployment(deploy *appsv1.Deployment, instance *edgev1alpha1.NeuronEX) {
+	var neuronIndex, ekuiperIndex int
+
+	for index, container := range deploy.Spec.Template.Spec.Containers {
+		if container.Name == instance.Spec.Neuron.Name {
+			neuronIndex = index
+		}
+		if container.Name == instance.Spec.EKuiper.Name {
+			ekuiperIndex = index
+		}
+	}
+
+	claimMap := sub.getClaimMap(instance.Spec.VolumeClaimTemplate)
+	if pvc, ok := claimMap["neuron-data"]; ok {
+		deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
+			Name: "neuron-data",
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: pvc.Name,
+				},
+			},
+		})
+	} else {
+		deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
+			Name: "neuron-data",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		})
+		deploy.Spec.Template.Spec.Containers[neuronIndex].VolumeMounts = append(deploy.Spec.Template.Spec.Containers[neuronIndex].VolumeMounts, corev1.VolumeMount{
+			Name:      "neuron-data",
+			MountPath: "/opt/neuron/persistence",
+		})
+
+		if pvc, ok := claimMap["ekuiper-data"]; ok {
+			deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
+				Name: "ekuiper-data",
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: pvc.Name,
+					},
+				},
+			})
+		} else {
+			deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
+				Name: "ekuiper-data",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			})
+		}
+		deploy.Spec.Template.Spec.Containers[ekuiperIndex].VolumeMounts = append(deploy.Spec.Template.Spec.Containers[ekuiperIndex].VolumeMounts, corev1.VolumeMount{
+			Name:      "ekuiper-data",
+			MountPath: "/kuiper/data",
+		})
+
+		if pvc, ok := claimMap["ekuiper-plugin"]; ok {
+			deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
+				Name: "ekuiper-plugin",
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: pvc.Name,
+					},
+				},
+			})
+		} else {
+			deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
+				Name: "ekuiper-plugin",
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			})
+		}
+		deploy.Spec.Template.Spec.Containers[ekuiperIndex].VolumeMounts = append(deploy.Spec.Template.Spec.Containers[ekuiperIndex].VolumeMounts, corev1.VolumeMount{
+			Name:      "ekuiper-plugin",
+			MountPath: "/kuiper/plugins/portable",
+		})
+
+		deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
+			Name: "shared-tmp",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		})
+		deploy.Spec.Template.Spec.Containers[neuronIndex].VolumeMounts = append(deploy.Spec.Template.Spec.Containers[neuronIndex].VolumeMounts, corev1.VolumeMount{
+			Name:      "shared-tmp",
+			MountPath: "/tmp",
+		})
+		deploy.Spec.Template.Spec.Containers[ekuiperIndex].VolumeMounts = append(deploy.Spec.Template.Spec.Containers[ekuiperIndex].VolumeMounts, corev1.VolumeMount{
+			Name:      "shared-tmp",
+			MountPath: "/tmp",
+		})
+	}
+}
+
+func (sub addPVC) getClaimMap(volumeClaimTemplate *corev1.PersistentVolumeClaim) map[string]*corev1.PersistentVolumeClaim {
 	if volumeClaimTemplate == nil {
 		return nil
 	}
-	return []*corev1.PersistentVolumeClaim{
-		sub.addNeuronDataClaim(volumeClaimTemplate),
-		sub.addEkuiperDataClaim(volumeClaimTemplate),
-		sub.addEkuiperPluginClaim(volumeClaimTemplate),
+	return map[string]*corev1.PersistentVolumeClaim{
+		"neuron-data":    sub.addNeuronDataClaim(volumeClaimTemplate),
+		"ekuiper-data":   sub.addEkuiperDataClaim(volumeClaimTemplate),
+		"ekuiper-plugin": sub.addEkuiperPluginClaim(volumeClaimTemplate),
 	}
 }
 

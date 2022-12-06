@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"strings"
 
 	emperror "emperror.dev/errors"
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
@@ -11,23 +10,33 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type childSubReconciler interface {
+	reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue
+	updateDeployment(deploy *appsv1.Deployment, instance *edgev1alpha1.NeuronEX)
+}
+
 type neuronEXDeploy struct {
-	pvcSubReconciler addPVC
+	subReconcilerList []childSubReconciler
 }
 
 func newNeuronEXDeploy() neuronEXDeploy {
 	return neuronEXDeploy{
-		pvcSubReconciler: addPVC{},
+		subReconcilerList: []childSubReconciler{
+			addPVC{},
+			ekuiperTool{},
+		},
 	}
 }
 
 func (sub neuronEXDeploy) reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue {
-	if err := sub.pvcSubReconciler.reconcile(ctx, r, instance.Spec.VolumeClaimTemplate); err != nil {
-		return err
-	}
-
 	deploy := sub.getDeployment(instance)
-	sub.updateStorage(deploy, sub.pvcSubReconciler.getClaimList(instance.Spec.VolumeClaimTemplate), instance.Spec.Neuron.Name, instance.Spec.EKuiper.Name)
+
+	for _, subReconciler := range sub.subReconcilerList {
+		if err := subReconciler.reconcile(ctx, r, instance); err != nil {
+			return err
+		}
+		subReconciler.updateDeployment(deploy, instance)
+	}
 
 	if err := createOrUpdate(ctx, r, instance, deploy); err != nil {
 		return &requeue{curError: emperror.Wrap(err, "failed to create or update deployment")}
@@ -137,101 +146,4 @@ func (sub neuronEXDeploy) getEkuiperContainer(ekuiper *corev1.Container) *corev1
 	}, ekuiper.Env...)
 
 	return ekuiper
-}
-
-func (sub neuronEXDeploy) updateStorage(deploy *appsv1.Deployment, claimList []*corev1.PersistentVolumeClaim, neuronName, ekuiperName string) {
-	var neuronIndex, ekuiperIndex int
-
-	for index, container := range deploy.Spec.Template.Spec.Containers {
-		if container.Name == neuronName {
-			neuronIndex = index
-		}
-		if container.Name == ekuiperName {
-			ekuiperIndex = index
-		}
-	}
-
-	if neuronIndex != 0 && ekuiperIndex != 0 {
-		deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
-			Name: "shared-tmp",
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
-		})
-		deploy.Spec.Template.Spec.Containers[neuronIndex].VolumeMounts = append(deploy.Spec.Template.Spec.Containers[neuronIndex].VolumeMounts, corev1.VolumeMount{
-			Name:      "shared-tmp",
-			MountPath: "/tmp",
-		})
-		deploy.Spec.Template.Spec.Containers[ekuiperIndex].VolumeMounts = append(deploy.Spec.Template.Spec.Containers[ekuiperIndex].VolumeMounts, corev1.VolumeMount{
-			Name:      "shared-tmp",
-			MountPath: "/tmp",
-		})
-	}
-
-	if len(claimList) != 0 {
-		for _, pvc := range claimList {
-			deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
-				Name: pvc.Name,
-				VolumeSource: corev1.VolumeSource{
-					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-						ClaimName: pvc.Name,
-					},
-				},
-			})
-		}
-	} else {
-		if neuronIndex != 0 {
-			deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
-				Name: "neuron-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
-			})
-		}
-		if ekuiperIndex != 0 {
-			deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, []corev1.Volume{
-				{Name: "ekuiper-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-				{Name: "ekuiper-plugin", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-			}...)
-		}
-	}
-
-	if neuronIndex != 0 {
-		sub.updateStorageNeuron(deploy, neuronIndex)
-	}
-	if ekuiperIndex != 0 {
-		sub.updateStorageEkuiper(deploy, ekuiperIndex)
-	}
-
-}
-
-func (sub neuronEXDeploy) updateStorageNeuron(deploy *appsv1.Deployment, neuronIndex int) {
-	neuron := deploy.Spec.Template.Spec.Containers[neuronIndex]
-	for _, volume := range deploy.Spec.Template.Spec.Volumes {
-		if strings.Contains(volume.Name, "neuron-data") {
-			neuron.VolumeMounts = append(neuron.VolumeMounts, corev1.VolumeMount{
-				Name:      volume.Name,
-				MountPath: "/opt/neuron/persistence",
-			})
-		}
-	}
-	deploy.Spec.Template.Spec.Containers[neuronIndex] = neuron
-}
-
-func (sub neuronEXDeploy) updateStorageEkuiper(deploy *appsv1.Deployment, ekuiperIndex int) {
-	ekuiper := deploy.Spec.Template.Spec.Containers[ekuiperIndex]
-	for _, volume := range deploy.Spec.Template.Spec.Volumes {
-		if strings.Contains(volume.Name, "ekuiper-data") {
-			ekuiper.VolumeMounts = append(ekuiper.VolumeMounts, corev1.VolumeMount{
-				Name:      volume.Name,
-				MountPath: "/kuiper/data",
-			})
-		}
-
-		if strings.Contains(volume.Name, "ekuiper-plugin") {
-			ekuiper.VolumeMounts = append(ekuiper.VolumeMounts, corev1.VolumeMount{
-				Name:      volume.Name,
-				MountPath: "/kuiper/plugins/portable",
-			})
-		}
-
-	}
-	deploy.Spec.Template.Spec.Containers[ekuiperIndex] = ekuiper
 }
