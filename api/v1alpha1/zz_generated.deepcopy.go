@@ -93,7 +93,11 @@ func (in *NeuronEXSpec) DeepCopyInto(out *NeuronEXSpec) {
 		*out = new(v1.Service)
 		(*in).DeepCopyInto(*out)
 	}
-	in.VolumeClaimTemplate.DeepCopyInto(&out.VolumeClaimTemplate)
+	if in.VolumeClaimTemplate != nil {
+		in, out := &in.VolumeClaimTemplate, &out.VolumeClaimTemplate
+		*out = new(v1.PersistentVolumeClaim)
+		(*in).DeepCopyInto(*out)
+	}
 	in.Neuron.DeepCopyInto(&out.Neuron)
 	in.EKuiper.DeepCopyInto(&out.EKuiper)
 	if in.Volumes != nil {
