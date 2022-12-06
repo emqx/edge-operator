@@ -25,10 +25,10 @@ import (
 
 // NeuronEXSpec defines the desired state of NeuronEX
 type NeuronEXSpec struct {
-	ServiceTemplate     *corev1.Service              `json:"serviceTemplate,omitempty"`
-	VolumeClaimTemplate corev1.PersistentVolumeClaim `json:"volumeClaimTemplate,omitempty"`
-	Neuron              corev1.Container             `json:"neuron,omitempty"`
-	EKuiper             corev1.Container             `json:"ekuiper,omitempty"`
+	ServiceTemplate     *corev1.Service               `json:"serviceTemplate,omitempty"`
+	VolumeClaimTemplate *corev1.PersistentVolumeClaim `json:"volumeClaimTemplate,omitempty"`
+	Neuron              corev1.Container              `json:"neuron,omitempty"`
+	EKuiper             corev1.Container              `json:"ekuiper,omitempty"`
 
 	// List of volumes that can be mounted by containers belonging to the pod.
 	// More info: https://kubernetes.io/docs/concepts/storage/volumes
@@ -293,7 +293,7 @@ type NeuronEXStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// NeuronEX is the Schema for the neuronices API
+// NeuronEX is the Schema for the neuronexs API
 type NeuronEX struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

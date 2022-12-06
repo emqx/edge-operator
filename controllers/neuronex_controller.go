@@ -18,27 +18,57 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	"github.com/banzaicloud/k8s-objectmatcher/patch"
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
+type Patcher struct {
+	*patch.Annotator
+	patch.Maker
+}
+
+type subReconciler interface {
+	reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue
+}
+
 // NeuronEXReconciler reconciles a NeuronEX object
 type NeuronEXReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme            *runtime.Scheme
+	Recorder          record.EventRecorder
+	Patcher           *Patcher
+	subReconcilerList []subReconciler
+}
+
+func NewNeuronEXReconciler(mgr manager.Manager) *NeuronEXReconciler {
+	var patcher *Patcher = new(Patcher)
+	patcher.Annotator = patch.NewAnnotator(edgev1alpha1.GroupVersion.Group + "/last-applied-configuration")
+	patcher.Maker = patch.NewPatchMaker(
+		patcher.Annotator,
+		&patch.K8sStrategicMergePatcher{},
+		&patch.BaseJSONMergePatcher{},
+	)
+
+	return &NeuronEXReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("neuronEX-controller"),
+		Patcher:  patcher,
+		subReconcilerList: []subReconciler{
+			newNeuronEXDeploy(),
+			neuronEXService{},
+		},
+	}
 }
 
 //+kubebuilder:rbac:groups=edge.emqx.io,resources=neuronices,verbs=get;list;watch;create;update;patch;delete
@@ -55,7 +85,7 @@ type NeuronEXReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.0/pkg/reconcile
 func (r *NeuronEXReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx).WithValues("neuronEX", req.NamespacedName)
 
 	instance := &edgev1alpha1.NeuronEX{}
 	if err := r.Client.Get(ctx, req.NamespacedName, instance); err != nil {
@@ -69,41 +99,27 @@ func (r *NeuronEXReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, nil
 	}
 
-	podList := &corev1.PodList{}
-	if err := r.Client.List(
-		ctx,
-		podList,
-		client.InNamespace(req.Namespace),
-		client.MatchingLabels(instance.GetLabels()),
-	); err != nil {
-		return ctrl.Result{}, err
-	}
-	if len(podList.Items) == 0 {
-		pod := addPod(instance)
-		if err := ctrl.SetControllerReference(instance, pod, r.Scheme); err != nil {
-			return ctrl.Result{}, err
-		}
-		if err := r.Client.Create(ctx, pod); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
-	for _, pod := range podList.Items {
-		controllerRef := metav1.GetControllerOf(&pod)
-		if controllerRef == nil {
+	delayedRequeue := false
+	for _, subReconciler := range r.subReconcilerList {
+		requeue := subReconciler.reconcile(ctx, r, instance)
+		if requeue == nil {
 			continue
 		}
-		if controllerRef.UID == instance.UID {
-			if pod.GetDeletionTimestamp() != nil {
-				pod := addPod(instance)
-				if err := ctrl.SetControllerReference(instance, pod, r.Scheme); err != nil {
-					return ctrl.Result{}, err
-				}
-				if err := r.Client.Create(ctx, pod); err != nil {
-					return ctrl.Result{}, err
-				}
-			}
+
+		if requeue.delayedRequeue {
+			logger.Info("Delaying requeue for sub-reconciler",
+				"subReconciler", fmt.Sprintf("%T", subReconciler),
+				"message", requeue.message,
+				"error", requeue.curError)
+			delayedRequeue = true
+			continue
 		}
+		return processRequeue(requeue, subReconciler, instance, r.Recorder, logger)
+	}
+
+	if delayedRequeue {
+		logger.Info("NeuronEX was not fully reconciled by reconciliation process")
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	return ctrl.Result{}, nil
@@ -113,35 +129,5 @@ func (r *NeuronEXReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func (r *NeuronEXReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&edgev1alpha1.NeuronEX{}).
-		Watches(
-			&source.Kind{Type: &corev1.Pod{}},
-			&handler.EnqueueRequestForOwner{OwnerType: &edgev1alpha1.NeuronEX{}, IsController: true},
-			builder.WithPredicates(
-				predicate.Funcs{
-					CreateFunc:  func(e event.CreateEvent) bool { return false },
-					UpdateFunc:  func(e event.UpdateEvent) bool { return e.ObjectNew.GetDeletionTimestamp() != nil },
-					DeleteFunc:  func(e event.DeleteEvent) bool { return false },
-					GenericFunc: func(e event.GenericEvent) bool { return false },
-				},
-			),
-		).
 		Complete(r)
-}
-
-func addPod(instance *edgev1alpha1.NeuronEX) *corev1.Pod {
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: instance.Name + "-",
-			Namespace:    instance.Namespace,
-			Labels:       instance.GetLabels(),
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				instance.Spec.Neuron,
-				instance.Spec.EKuiper,
-			},
-		},
-	}
-
-	return pod
 }
