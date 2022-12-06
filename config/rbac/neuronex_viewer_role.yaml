@@ -1,4 +1,4 @@
-# permissions for end users to view neuronices.
+# permissions for end users to view neuronexs.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -14,7 +14,7 @@ rules:
 - apiGroups:
   - edge.emqx.io
   resources:
-  - neuronices
+  - neuronexs
   verbs:
   - get
   - list
@@ -22,6 +22,6 @@ rules:
 - apiGroups:
   - edge.emqx.io
   resources:
-  - neuronices/status
+  - neuronexs/status
   verbs:
   - get

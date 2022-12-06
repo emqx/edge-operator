@@ -66,14 +66,14 @@ func NewNeuronEXReconciler(mgr manager.Manager) *NeuronEXReconciler {
 		Patcher:  patcher,
 		subReconcilerList: []subReconciler{
 			newNeuronEXDeploy(),
-			neuronEXService{},
+			newNeuronEXService(),
 		},
 	}
 }
 
-//+kubebuilder:rbac:groups=edge.emqx.io,resources=neuronices,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=edge.emqx.io,resources=neuronices/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=edge.emqx.io,resources=neuronices/finalizers,verbs=update
+//+kubebuilder:rbac:groups=edge.emqx.io,resources=neuronexs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=edge.emqx.io,resources=neuronexs/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=edge.emqx.io,resources=neuronexs/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

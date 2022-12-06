@@ -10,15 +10,22 @@ import (
 
 type neuronEXService struct{}
 
+func newNeuronEXService() neuronEXService {
+	return neuronEXService{}
+}
+
 func (sub neuronEXService) reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue {
 	if instance.Spec.ServiceTemplate == nil {
 		return nil
 	}
 
-	if err := createOrUpdate(ctx, r, instance, &corev1.Service{
+	svc := &corev1.Service{
 		ObjectMeta: instance.Spec.ServiceTemplate.ObjectMeta,
 		Spec:       instance.Spec.ServiceTemplate.Spec,
-	}); err != nil {
+	}
+	svc.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Service"))
+
+	if err := createOrUpdate(ctx, r, instance, svc); err != nil {
 		return &requeue{curError: emperror.Wrap(err, "failed to create or update service")}
 	}
 	return nil

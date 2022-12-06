@@ -5,13 +5,15 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
-  name: neuronices.edge.emqx.io
+  name: neuronexs.edge.emqx.io
 spec:
   group: edge.emqx.io
   names:
     kind: NeuronEX
     listKind: NeuronEXList
-    plural: neuronices
+    plural: neuronexs
+    shortNames:
+    - nex
     singular: neuronex
   scope: Namespaced
   versions:

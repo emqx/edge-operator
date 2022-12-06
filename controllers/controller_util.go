@@ -48,10 +48,12 @@ func createOrUpdate(ctx context.Context, r *NeuronEXReconciler, owner, obj clien
 		obj.SetCreationTimestamp(u.GetCreationTimestamp())
 		obj.SetManagedFields(u.GetManagedFields())
 
+		if err = ctrl.SetControllerReference(owner, obj, r.Scheme); err != nil {
+			return emperror.Wrapf(err, "failed to set controller reference for %s %s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName())
+		}
 		if err := r.Patcher.SetLastAppliedAnnotation(obj); err != nil {
 			return emperror.Wrapf(err, "failed to set controller reference for %s %s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName())
 		}
-
 		if err := r.Client.Update(context.TODO(), obj); err != nil {
 			return emperror.Wrapf(err, "failed to update %s %s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName())
 		}

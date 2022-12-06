@@ -9,9 +9,22 @@ metadata:
     app.kubernetes.io/created-by: edge-operator
   name: neuronex-sample
 spec:
+  volumeClaimTemplate:
+    metadata:
+      name: neuronex-sample
+      namespace: default
+      labels:
+        app.kubernetes.io/instance: neuronex-sample
+    spec:
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 20Mi
+      accessModes:
+      - ReadWriteOnce
   neuron:
     name: neuron
     image: emqx/neuron:2.2.8
   ekuiper:
     name: ekuiper
-    image: lfedge/ekuiper:1.7.1-slim-python 
+    image: lfedge/ekuiper:1.7.1-slim
