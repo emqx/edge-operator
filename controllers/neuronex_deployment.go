@@ -43,7 +43,7 @@ func (sub neuronEXDeploy) getDeployment(instance *edgev1alpha1.NeuronEX) *appsv1
 	}
 	delete(labels, "kubectl.kubernetes.io/last-applied-configuration")
 
-	return &appsv1.Deployment{
+	deploy := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        instance.Name,
 			Namespace:   instance.Namespace,
@@ -67,6 +67,8 @@ func (sub neuronEXDeploy) getDeployment(instance *edgev1alpha1.NeuronEX) *appsv1
 			},
 		},
 	}
+	deploy.SetGroupVersionKind(appsv1.SchemeGroupVersion.WithKind("Deployment"))
+	return deploy
 }
 
 func (sub neuronEXDeploy) getPodSpec(instance *edgev1alpha1.NeuronEX) corev1.PodSpec {

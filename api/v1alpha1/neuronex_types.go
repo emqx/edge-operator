@@ -292,6 +292,7 @@ type NeuronEXStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:path=neuronexs,shortName=nex
 
 // NeuronEX is the Schema for the neuronexs API
 type NeuronEX struct {

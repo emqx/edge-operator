@@ -52,7 +52,7 @@ rules:
 - apiGroups:
   - edge.emqx.io
   resources:
-  - neuronices
+  - neuronexs
   verbs:
   - create
   - delete
@@ -64,13 +64,13 @@ rules:
 - apiGroups:
   - edge.emqx.io
   resources:
-  - neuronices/finalizers
+  - neuronexs/finalizers
   verbs:
   - update
 - apiGroups:
   - edge.emqx.io
   resources:
-  - neuronices/status
+  - neuronexs/status
   verbs:
   - get
   - patch
