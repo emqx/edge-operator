@@ -1,0 +1,27 @@
+# permissions for end users to view neurons.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: neuron-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: edge-operator
+    app.kubernetes.io/part-of: edge-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: neuron-viewer-role
+rules:
+- apiGroups:
+  - edge.emqx.io
+  resources:
+  - neurons
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - edge.emqx.io
+  resources:
+  - neurons/status
+  verbs:
+  - get

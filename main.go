@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	edgeemqxiov1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
+	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"github.com/emqx/edge-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
@@ -45,6 +46,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(edgeemqxiov1alpha1.AddToScheme(scheme))
+	utilruntime.Must(edgev1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -99,6 +101,12 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "NeuronEX")
 		os.Exit(1)
 	}
+
+	if err := controllers.NewNeuronReconciler(mgr).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Neuron")
+		os.Exit(1)
+	}
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

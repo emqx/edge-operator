@@ -1,0 +1,28 @@
+apiVersion: edge.emqx.io/v1alpha1
+kind: Neuron
+metadata:
+  labels:
+    app.kubernetes.io/name: neuron
+    app.kubernetes.io/instance: neuron-sample
+    app.kubernetes.io/part-of: edge-operator
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: edge-operator
+  name: neuron-sample
+spec:
+  # TODO(user): Add fields here
+  volumeClaimTemplate:
+    metadata:
+      name: neuron-sample
+      namespace: default
+      labels:
+        app.kubernetes.io/instance: neuron-sample
+    spec:
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 20Mi
+      accessModes:
+      - ReadWriteOnce
+  neuron:
+    name: neuron
+    image: emqx/neuron:2.2.8

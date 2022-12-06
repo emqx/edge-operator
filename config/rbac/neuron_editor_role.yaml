@@ -1,0 +1,31 @@
+# permissions for end users to edit neurons.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: neuron-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: edge-operator
+    app.kubernetes.io/part-of: edge-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: neuron-editor-role
+rules:
+- apiGroups:
+  - edge.emqx.io
+  resources:
+  - neurons
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - edge.emqx.io
+  resources:
+  - neurons/status
+  verbs:
+  - get
