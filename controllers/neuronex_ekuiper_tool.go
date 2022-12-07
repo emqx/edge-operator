@@ -15,21 +15,26 @@ import (
 
 type ekuiperTool struct{}
 
-func (sub ekuiperTool) reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue {
+func (sub ekuiperTool) reconcile(ctx context.Context, r *NeuronEXReconciler, instance edgev1alpha1.EdgeInterface) *requeue {
+	// Just use neuronEX
+	if _, ok := instance.(*edgev1alpha1.NeuronEX); !ok {
+		return nil
+	}
+
 	cm := sub.getConfigMap(instance)
 	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(cm), cm); err != nil {
 		if k8sErrors.IsNotFound(err) {
 			if err := create(ctx, r, instance, cm); err != nil {
-				return &requeue{curError: emperror.Wrapf(err, "failed to create configmap")}
+				return &requeue{curError: emperror.Wrapf(err, "failed to create configMap")}
 			}
 		}
-		return &requeue{curError: emperror.Wrap(err, "failed to get PVC")}
+		return &requeue{curError: emperror.Wrap(err, "failed to get configMap")}
 	}
 	return nil
 }
 
-func (sub ekuiperTool) updateDeployment(deploy *appsv1.Deployment, instance *edgev1alpha1.NeuronEX) {
-	tool := sub.getEkuiperToolContainer(instance.Spec.EKuiper)
+func (sub ekuiperTool) updateDeployment(deploy *appsv1.Deployment, instance edgev1alpha1.EdgeInterface) {
+	tool := sub.getEkuiperToolContainer(instance.GetEKuiper())
 	deploy.Spec.Template.Spec.Containers = append(deploy.Spec.Template.Spec.Containers, *tool)
 
 	cm := sub.getConfigMap(instance)
@@ -45,7 +50,7 @@ func (sub ekuiperTool) updateDeployment(deploy *appsv1.Deployment, instance *edg
 	})
 }
 
-func (sub ekuiperTool) getConfigMap(instance *edgev1alpha1.NeuronEX) *corev1.ConfigMap {
+func (sub ekuiperTool) getConfigMap(instance edgev1alpha1.EdgeInterface) *corev1.ConfigMap {
 	neuronStream := map[string]interface{}{
 		"command": map[string]interface{}{
 			"url":         "/streams",
@@ -74,7 +79,7 @@ func (sub ekuiperTool) getConfigMap(instance *edgev1alpha1.NeuronEX) *corev1.Con
 	return cm
 }
 
-func (sub ekuiperTool) getEkuiperToolContainer(ekuiper corev1.Container) *corev1.Container {
+func (sub ekuiperTool) getEkuiperToolContainer(ekuiper *corev1.Container) *corev1.Container {
 	return &corev1.Container{
 		Name:            "ekuiper-tool",
 		Image:           "lfedge/ekuiper-kubernetes-tool:latest",

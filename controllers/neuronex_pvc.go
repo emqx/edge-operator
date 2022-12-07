@@ -14,8 +14,8 @@ import (
 
 type addPVC struct{}
 
-func (sub addPVC) reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue {
-	for _, pvc := range sub.getClaimMap(instance.Spec.VolumeClaimTemplate) {
+func (sub addPVC) reconcile(ctx context.Context, r *NeuronEXReconciler, instance edgev1alpha1.EdgeInterface) *requeue {
+	for _, pvc := range sub.getClaimMap(instance.GetVolumeClaimTemplate()) {
 		if err := r.Client.Get(ctx, client.ObjectKeyFromObject(pvc), pvc); err != nil {
 			if k8sErrors.IsNotFound(err) {
 				if err := r.Client.Create(ctx, pvc); err != nil {
@@ -28,19 +28,19 @@ func (sub addPVC) reconcile(ctx context.Context, r *NeuronEXReconciler, instance
 	return nil
 }
 
-func (sub addPVC) updateDeployment(deploy *appsv1.Deployment, instance *edgev1alpha1.NeuronEX) {
+func (sub addPVC) updateDeployment(deploy *appsv1.Deployment, instance edgev1alpha1.EdgeInterface) {
 	var neuronIndex, ekuiperIndex int
 
 	for index, container := range deploy.Spec.Template.Spec.Containers {
-		if container.Name == instance.Spec.Neuron.Name {
+		if container.Name == instance.GetNeuron().Name {
 			neuronIndex = index
 		}
-		if container.Name == instance.Spec.EKuiper.Name {
+		if container.Name == instance.GetEKuiper().Name {
 			ekuiperIndex = index
 		}
 	}
 
-	claimMap := sub.getClaimMap(instance.Spec.VolumeClaimTemplate)
+	claimMap := sub.getClaimMap(instance.GetVolumeClaimTemplate())
 	if pvc, ok := claimMap["neuron-data"]; ok {
 		deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
 			Name: "neuron-data",

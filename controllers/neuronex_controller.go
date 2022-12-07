@@ -38,7 +38,7 @@ type Patcher struct {
 }
 
 type subReconciler interface {
-	reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue
+	reconcile(ctx context.Context, r *NeuronEXReconciler, instance edgev1alpha1.EdgeInterface) *requeue
 }
 
 // NeuronEXReconciler reconciles a NeuronEX object

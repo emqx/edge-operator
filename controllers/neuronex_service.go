@@ -14,14 +14,14 @@ func newNeuronEXService() neuronEXService {
 	return neuronEXService{}
 }
 
-func (sub neuronEXService) reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue {
-	if instance.Spec.ServiceTemplate == nil {
+func (sub neuronEXService) reconcile(ctx context.Context, r *NeuronEXReconciler, instance edgev1alpha1.EdgeInterface) *requeue {
+	if instance.GetServiceTemplate() == nil {
 		return nil
 	}
 
 	svc := &corev1.Service{
-		ObjectMeta: instance.Spec.ServiceTemplate.ObjectMeta,
-		Spec:       instance.Spec.ServiceTemplate.Spec,
+		ObjectMeta: instance.GetServiceTemplate().ObjectMeta,
+		Spec:       instance.GetServiceTemplate().Spec,
 	}
 	svc.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Service"))
 

@@ -10,25 +10,25 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type childSubReconciler interface {
-	reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue
-	updateDeployment(deploy *appsv1.Deployment, instance *edgev1alpha1.NeuronEX)
+type deploySubReconciler interface {
+	reconcile(ctx context.Context, r *NeuronEXReconciler, instance edgev1alpha1.EdgeInterface) *requeue
+	updateDeployment(deploy *appsv1.Deployment, instance edgev1alpha1.EdgeInterface)
 }
 
 type neuronEXDeploy struct {
-	subReconcilerList []childSubReconciler
+	subReconcilerList []deploySubReconciler
 }
 
 func newNeuronEXDeploy() neuronEXDeploy {
 	return neuronEXDeploy{
-		subReconcilerList: []childSubReconciler{
+		subReconcilerList: []deploySubReconciler{
 			addPVC{},
 			ekuiperTool{},
 		},
 	}
 }
 
-func (sub neuronEXDeploy) reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue {
+func (sub neuronEXDeploy) reconcile(ctx context.Context, r *NeuronEXReconciler, instance edgev1alpha1.EdgeInterface) *requeue {
 	deploy := sub.getDeployment(instance)
 
 	for _, subReconciler := range sub.subReconcilerList {
@@ -45,8 +45,8 @@ func (sub neuronEXDeploy) reconcile(ctx context.Context, r *NeuronEXReconciler, 
 	return nil
 }
 
-func (sub neuronEXDeploy) getDeployment(instance *edgev1alpha1.NeuronEX) *appsv1.Deployment {
-	labels := instance.Labels
+func (sub neuronEXDeploy) getDeployment(instance edgev1alpha1.EdgeInterface) *appsv1.Deployment {
+	labels := instance.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
 	}
@@ -54,9 +54,9 @@ func (sub neuronEXDeploy) getDeployment(instance *edgev1alpha1.NeuronEX) *appsv1
 
 	deploy := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        instance.Name,
-			Namespace:   instance.Namespace,
-			Annotations: instance.Annotations,
+			Name:        instance.GetName(),
+			Namespace:   instance.GetNamespace(),
+			Annotations: instance.GetAnnotations(),
 			Labels:      labels,
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -70,7 +70,7 @@ func (sub neuronEXDeploy) getDeployment(instance *edgev1alpha1.NeuronEX) *appsv1
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      labels,
-					Annotations: instance.Annotations,
+					Annotations: instance.GetAnnotations(),
 				},
 				Spec: sub.getPodSpec(instance),
 			},
@@ -80,48 +80,53 @@ func (sub neuronEXDeploy) getDeployment(instance *edgev1alpha1.NeuronEX) *appsv1
 	return deploy
 }
 
-func (sub neuronEXDeploy) getPodSpec(instance *edgev1alpha1.NeuronEX) corev1.PodSpec {
+func (sub neuronEXDeploy) getPodSpec(instance edgev1alpha1.EdgeInterface) corev1.PodSpec {
+	containers := []corev1.Container{}
+	if instance.GetNeuron() != nil {
+		containers = append(containers, *sub.getNeuronContainer(instance.GetNeuron().DeepCopy()))
+	}
+	if instance.GetEKuiper() != nil {
+		containers = append(containers, *sub.getEkuiperContainer(instance.GetEKuiper().DeepCopy()))
+	}
+
 	return corev1.PodSpec{
-		Containers: []corev1.Container{
-			*sub.getNeuronContainer(instance.Spec.Neuron.DeepCopy()),
-			*sub.getEkuiperContainer(instance.Spec.EKuiper.DeepCopy()),
-		},
-		Volumes:                       instance.Spec.Volumes,
-		InitContainers:                instance.Spec.InitContainers,
-		EphemeralContainers:           instance.Spec.EphemeralContainers,
-		RestartPolicy:                 instance.Spec.RestartPolicy,
-		TerminationGracePeriodSeconds: instance.Spec.TerminationGracePeriodSeconds,
-		ActiveDeadlineSeconds:         instance.Spec.ActiveDeadlineSeconds,
-		DNSPolicy:                     instance.Spec.DNSPolicy,
-		NodeSelector:                  instance.Spec.NodeSelector,
-		ServiceAccountName:            instance.Spec.ServiceAccountName,
-		DeprecatedServiceAccount:      instance.Spec.DeprecatedServiceAccount,
-		AutomountServiceAccountToken:  instance.Spec.AutomountServiceAccountToken,
-		NodeName:                      instance.Spec.NodeName,
-		HostNetwork:                   instance.Spec.HostNetwork,
-		HostPID:                       instance.Spec.HostPID,
-		HostIPC:                       instance.Spec.HostIPC,
-		ShareProcessNamespace:         instance.Spec.ShareProcessNamespace,
-		SecurityContext:               instance.Spec.PodSecurityContext,
-		ImagePullSecrets:              instance.Spec.ImagePullSecrets,
-		Hostname:                      instance.Spec.Hostname,
-		Subdomain:                     instance.Spec.Subdomain,
-		Affinity:                      instance.Spec.Affinity,
-		SchedulerName:                 instance.Spec.SchedulerName,
-		Tolerations:                   instance.Spec.Tolerations,
-		HostAliases:                   instance.Spec.HostAliases,
-		PriorityClassName:             instance.Spec.PriorityClassName,
-		Priority:                      instance.Spec.Priority,
-		DNSConfig:                     instance.Spec.DNSConfig,
-		ReadinessGates:                instance.Spec.ReadinessGates,
-		RuntimeClassName:              instance.Spec.RuntimeClassName,
-		EnableServiceLinks:            instance.Spec.EnableServiceLinks,
-		PreemptionPolicy:              instance.Spec.PreemptionPolicy,
-		Overhead:                      instance.Spec.Overhead,
-		TopologySpreadConstraints:     instance.Spec.TopologySpreadConstraints,
-		SetHostnameAsFQDN:             instance.Spec.SetHostnameAsFQDN,
-		OS:                            instance.Spec.OS,
-		HostUsers:                     instance.Spec.HostUsers,
+		Containers:                    containers,
+		Volumes:                       instance.GetEdgePodSpec().Volumes,
+		InitContainers:                instance.GetEdgePodSpec().InitContainers,
+		EphemeralContainers:           instance.GetEdgePodSpec().EphemeralContainers,
+		RestartPolicy:                 instance.GetEdgePodSpec().RestartPolicy,
+		TerminationGracePeriodSeconds: instance.GetEdgePodSpec().TerminationGracePeriodSeconds,
+		ActiveDeadlineSeconds:         instance.GetEdgePodSpec().ActiveDeadlineSeconds,
+		DNSPolicy:                     instance.GetEdgePodSpec().DNSPolicy,
+		NodeSelector:                  instance.GetEdgePodSpec().NodeSelector,
+		ServiceAccountName:            instance.GetEdgePodSpec().ServiceAccountName,
+		DeprecatedServiceAccount:      instance.GetEdgePodSpec().DeprecatedServiceAccount,
+		AutomountServiceAccountToken:  instance.GetEdgePodSpec().AutomountServiceAccountToken,
+		NodeName:                      instance.GetEdgePodSpec().NodeName,
+		HostNetwork:                   instance.GetEdgePodSpec().HostNetwork,
+		HostPID:                       instance.GetEdgePodSpec().HostPID,
+		HostIPC:                       instance.GetEdgePodSpec().HostIPC,
+		ShareProcessNamespace:         instance.GetEdgePodSpec().ShareProcessNamespace,
+		SecurityContext:               instance.GetEdgePodSpec().PodSecurityContext,
+		ImagePullSecrets:              instance.GetEdgePodSpec().ImagePullSecrets,
+		Hostname:                      instance.GetEdgePodSpec().Hostname,
+		Subdomain:                     instance.GetEdgePodSpec().Subdomain,
+		Affinity:                      instance.GetEdgePodSpec().Affinity,
+		SchedulerName:                 instance.GetEdgePodSpec().SchedulerName,
+		Tolerations:                   instance.GetEdgePodSpec().Tolerations,
+		HostAliases:                   instance.GetEdgePodSpec().HostAliases,
+		PriorityClassName:             instance.GetEdgePodSpec().PriorityClassName,
+		Priority:                      instance.GetEdgePodSpec().Priority,
+		DNSConfig:                     instance.GetEdgePodSpec().DNSConfig,
+		ReadinessGates:                instance.GetEdgePodSpec().ReadinessGates,
+		RuntimeClassName:              instance.GetEdgePodSpec().RuntimeClassName,
+		EnableServiceLinks:            instance.GetEdgePodSpec().EnableServiceLinks,
+		PreemptionPolicy:              instance.GetEdgePodSpec().PreemptionPolicy,
+		Overhead:                      instance.GetEdgePodSpec().Overhead,
+		TopologySpreadConstraints:     instance.GetEdgePodSpec().TopologySpreadConstraints,
+		SetHostnameAsFQDN:             instance.GetEdgePodSpec().SetHostnameAsFQDN,
+		OS:                            instance.GetEdgePodSpec().OS,
+		HostUsers:                     instance.GetEdgePodSpec().HostUsers,
 	}
 }
 
