@@ -13,27 +13,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ekuiperTool struct{}
+type subEkuiperTool struct{}
 
-func (sub ekuiperTool) reconcile(ctx context.Context, r *NeuronEXReconciler, instance edgev1alpha1.EdgeInterface) *requeue {
+func (sub subEkuiperTool) reconcile(ctx context.Context, r edgeReconcilerInterface, instance edgev1alpha1.EdgeInterface) *requeue {
 	// Just use neuronEX
 	if _, ok := instance.(*edgev1alpha1.NeuronEX); !ok {
 		return nil
 	}
 
 	cm := sub.getConfigMap(instance)
-	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(cm), cm); err != nil {
+	if err := r.Get(ctx, client.ObjectKeyFromObject(cm), cm); err != nil {
 		if k8sErrors.IsNotFound(err) {
 			if err := create(ctx, r, instance, cm); err != nil {
 				return &requeue{curError: emperror.Wrapf(err, "failed to create configMap")}
 			}
+			return nil
 		}
 		return &requeue{curError: emperror.Wrap(err, "failed to get configMap")}
 	}
 	return nil
 }
 
-func (sub ekuiperTool) updateDeployment(deploy *appsv1.Deployment, instance edgev1alpha1.EdgeInterface) {
+func (sub subEkuiperTool) updateDeployment(deploy *appsv1.Deployment, instance edgev1alpha1.EdgeInterface) {
 	tool := sub.getEkuiperToolContainer(instance.GetEKuiper())
 	deploy.Spec.Template.Spec.Containers = append(deploy.Spec.Template.Spec.Containers, *tool)
 
@@ -50,7 +51,7 @@ func (sub ekuiperTool) updateDeployment(deploy *appsv1.Deployment, instance edge
 	})
 }
 
-func (sub ekuiperTool) getConfigMap(instance edgev1alpha1.EdgeInterface) *corev1.ConfigMap {
+func (sub subEkuiperTool) getConfigMap(instance edgev1alpha1.EdgeInterface) *corev1.ConfigMap {
 	neuronStream := map[string]interface{}{
 		"command": map[string]interface{}{
 			"url":         "/streams",
@@ -79,7 +80,7 @@ func (sub ekuiperTool) getConfigMap(instance edgev1alpha1.EdgeInterface) *corev1
 	return cm
 }
 
-func (sub ekuiperTool) getEkuiperToolContainer(ekuiper *corev1.Container) *corev1.Container {
+func (sub subEkuiperTool) getEkuiperToolContainer(ekuiper *corev1.Container) *corev1.Container {
 	return &corev1.Container{
 		Name:            "ekuiper-tool",
 		Image:           "lfedge/ekuiper-kubernetes-tool:latest",

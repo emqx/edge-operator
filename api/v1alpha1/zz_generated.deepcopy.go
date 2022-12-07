@@ -77,8 +77,8 @@ func (in *EdgePodSpec) DeepCopyInto(out *EdgePodSpec) {
 		*out = new(bool)
 		**out = **in
 	}
-	if in.PodSecurityContext != nil {
-		in, out := &in.PodSecurityContext, &out.PodSecurityContext
+	if in.SecurityContext != nil {
+		in, out := &in.SecurityContext, &out.SecurityContext
 		*out = new(v1.PodSecurityContext)
 		(*in).DeepCopyInto(*out)
 	}

@@ -8,13 +8,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type neuronEXService struct{}
+type subService struct{}
 
-func newNeuronEXService() neuronEXService {
-	return neuronEXService{}
+func newSubService() subService {
+	return subService{}
 }
 
-func (sub neuronEXService) reconcile(ctx context.Context, r *NeuronEXReconciler, instance edgev1alpha1.EdgeInterface) *requeue {
+func (sub subService) reconcile(ctx context.Context, r edgeReconcilerInterface, instance edgev1alpha1.EdgeInterface) *requeue {
 	if instance.GetServiceTemplate() == nil {
 		return nil
 	}

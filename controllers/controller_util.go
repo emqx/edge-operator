@@ -10,17 +10,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func createOrUpdate(ctx context.Context, r *NeuronEXReconciler, owner, obj client.Object) error {
+func createOrUpdate(ctx context.Context, r edgeReconcilerInterface, owner, obj client.Object) error {
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
-	if err := r.Client.Get(context.TODO(), client.ObjectKeyFromObject(obj), u); err != nil {
+	if err := r.Get(ctx, client.ObjectKeyFromObject(obj), u); err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return create(ctx, r, owner, obj)
 		}
 		return emperror.Wrapf(err, "failed to get %s %s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName())
 	}
 
-	patcherResult, err := r.Patcher.Calculate(u, obj)
+	patcherResult, err := r.Calculate(u, obj)
 	if err != nil {
 		return emperror.Wrapf(err, "failed to calculate patch for %s %s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName())
 	}
@@ -31,20 +31,20 @@ func createOrUpdate(ctx context.Context, r *NeuronEXReconciler, owner, obj clien
 	return nil
 }
 
-func create(ctx context.Context, r *NeuronEXReconciler, owner, obj client.Object) error {
-	if err := ctrl.SetControllerReference(owner, obj, r.Scheme); err != nil {
+func create(ctx context.Context, r edgeReconcilerInterface, owner, obj client.Object) error {
+	if err := ctrl.SetControllerReference(owner, obj, r.Scheme()); err != nil {
 		return emperror.Wrapf(err, "failed to set controller reference for %s %s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName())
 	}
-	if err := r.Patcher.SetLastAppliedAnnotation(obj); err != nil {
+	if err := r.SetLastAppliedAnnotation(obj); err != nil {
 		return emperror.Wrapf(err, "failed to set last applied annotation for %s %s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName())
 	}
-	if err := r.Client.Create(ctx, obj); err != nil {
+	if err := r.Create(ctx, obj); err != nil {
 		return emperror.Wrapf(err, "failed to create %s %s", obj.GetObjectKind().GroupVersionKind().Kind, obj.GetName())
 	}
 	return nil
 }
 
-func update(ctx context.Context, r *NeuronEXReconciler, owner, curObj, oriObj client.Object) error {
+func update(ctx context.Context, r edgeReconcilerInterface, owner, curObj, oriObj client.Object) error {
 	annotations := curObj.GetAnnotations()
 	if annotations == nil {
 		annotations = make(map[string]string)
@@ -59,13 +59,13 @@ func update(ctx context.Context, r *NeuronEXReconciler, owner, curObj, oriObj cl
 	curObj.SetCreationTimestamp(oriObj.GetCreationTimestamp())
 	curObj.SetManagedFields(oriObj.GetManagedFields())
 
-	if err := ctrl.SetControllerReference(owner, curObj, r.Scheme); err != nil {
+	if err := ctrl.SetControllerReference(owner, curObj, r.Scheme()); err != nil {
 		return emperror.Wrapf(err, "failed to set controller reference for %s %s", curObj.GetObjectKind().GroupVersionKind().Kind, curObj.GetName())
 	}
-	if err := r.Patcher.SetLastAppliedAnnotation(curObj); err != nil {
+	if err := r.SetLastAppliedAnnotation(curObj); err != nil {
 		return emperror.Wrapf(err, "failed to set controller reference for %s %s", curObj.GetObjectKind().GroupVersionKind().Kind, curObj.GetName())
 	}
-	if err := r.Client.Update(context.TODO(), curObj); err != nil {
+	if err := r.Update(context.TODO(), curObj); err != nil {
 		return emperror.Wrapf(err, "failed to update %s %s", curObj.GetObjectKind().GroupVersionKind().Kind, curObj.GetName())
 	}
 
