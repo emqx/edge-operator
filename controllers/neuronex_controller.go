@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,26 +31,16 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
-type Patcher struct {
-	*patch.Annotator
-	patch.Maker
-}
-
-type subReconciler interface {
-	reconcile(ctx context.Context, r *NeuronEXReconciler, instance *edgev1alpha1.NeuronEX) *requeue
-}
-
 // NeuronEXReconciler reconciles a NeuronEX object
 type NeuronEXReconciler struct {
+	*patcher
 	client.Client
-	Scheme            *runtime.Scheme
 	Recorder          record.EventRecorder
-	Patcher           *Patcher
 	subReconcilerList []subReconciler
 }
 
 func NewNeuronEXReconciler(mgr manager.Manager) *NeuronEXReconciler {
-	var patcher *Patcher = new(Patcher)
+	var patcher *patcher = new(patcher)
 	patcher.Annotator = patch.NewAnnotator(edgev1alpha1.GroupVersion.Group + "/last-applied-configuration")
 	patcher.Maker = patch.NewPatchMaker(
 		patcher.Annotator,
@@ -60,13 +49,12 @@ func NewNeuronEXReconciler(mgr manager.Manager) *NeuronEXReconciler {
 	)
 
 	return &NeuronEXReconciler{
+		patcher:  patcher,
 		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("neuronEX-controller"),
-		Patcher:  patcher,
 		subReconcilerList: []subReconciler{
-			newNeuronEXDeploy(),
-			newNeuronEXService(),
+			newSubDeploy(),
+			newSubService(),
 		},
 	}
 }
@@ -88,7 +76,7 @@ func (r *NeuronEXReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	logger := log.FromContext(ctx).WithValues("neuronEX", req.NamespacedName)
 
 	instance := &edgev1alpha1.NeuronEX{}
-	if err := r.Client.Get(ctx, req.NamespacedName, instance); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, instance); err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
