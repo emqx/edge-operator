@@ -34,11 +34,13 @@ func (sub subPVC) updateDeployment(deploy *appsv1.Deployment, instance edgev1alp
 	for index, container := range deploy.Spec.Template.Spec.Containers {
 		if instance.GetNeuron() != nil {
 			if container.Name == instance.GetNeuron().Name {
+				neuronIndex = new(int)
 				*neuronIndex = index
 			}
 		}
 		if instance.GetEKuiper() != nil {
 			if container.Name == instance.GetEKuiper().Name {
+				ekuiperIndex = new(int)
 				*ekuiperIndex = index
 			}
 		}
