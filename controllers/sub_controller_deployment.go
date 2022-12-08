@@ -20,12 +20,20 @@ type subDeploy struct {
 	subReconcilerList []deploySubReconciler
 }
 
-func newSubDeploy() subDeploy {
-	return subDeploy{
-		subReconcilerList: []deploySubReconciler{
-			subPVC{},
-			subEkuiperTool{},
-		},
+func newSubDeploy(enableTool bool) subDeploy {
+	if enableTool {
+		return subDeploy{
+			subReconcilerList: []deploySubReconciler{
+				subPVC{},
+				subEkuiperTool{},
+			},
+		}
+	} else {
+		return subDeploy{
+			subReconcilerList: []deploySubReconciler{
+				subPVC{},
+			},
+		}
 	}
 }
 

@@ -21,7 +21,6 @@ import (
 	"fmt"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,21 +31,16 @@ import (
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 )
 
-type neuronSubReconciler interface {
-	reconcile(ctx context.Context, r *NeuronReconciler, instance *edgev1alpha1.Neuron) *requeue
-}
-
 // NeuronReconciler reconciles a Neuron object
 type NeuronReconciler struct {
+	*patcher
 	client.Client
-	Scheme            *runtime.Scheme
 	Recorder          record.EventRecorder
-	Patcher           *Patcher
-	subReconcilerList []neuronSubReconciler
+	subReconcilerList []subReconciler
 }
 
 func NewNeuronReconciler(mgr manager.Manager) *NeuronReconciler {
-	var patcher *Patcher = new(Patcher)
+	var patcher *patcher = new(patcher)
 	patcher.Annotator = patch.NewAnnotator(edgev1alpha1.GroupVersion.Group + "/last-applied-configuration")
 	patcher.Maker = patch.NewPatchMaker(
 		patcher.Annotator,
@@ -55,13 +49,12 @@ func NewNeuronReconciler(mgr manager.Manager) *NeuronReconciler {
 	)
 
 	return &NeuronReconciler{
+		patcher:  patcher,
 		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("neuron-controller"),
-		Patcher:  patcher,
-		subReconcilerList: []neuronSubReconciler{
-			newNeuronDeploy(),
-			newNeuronService(),
+		subReconcilerList: []subReconciler{
+			newSubDeploy(false),
+			newSubService(),
 		},
 	}
 }
@@ -102,8 +95,8 @@ func (r *NeuronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 
 		if requeue.delayedRequeue {
-			logger.Info("Delaying requeue for neuron-sub-reconciler",
-				"neuronsubReconciler", fmt.Sprintf("%T", subReconciler),
+			logger.Info("Delaying requeue for sub-reconciler",
+				"subReconciler", fmt.Sprintf("%T", subReconciler),
 				"message", requeue.message,
 				"error", requeue.curError)
 			delayedRequeue = true

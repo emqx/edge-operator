@@ -53,7 +53,7 @@ func NewNeuronEXReconciler(mgr manager.Manager) *NeuronEXReconciler {
 		Client:   mgr.GetClient(),
 		Recorder: mgr.GetEventRecorderFor("neuronEX-controller"),
 		subReconcilerList: []subReconciler{
-			newSubDeploy(),
+			newSubDeploy(true),
 			newSubService(),
 		},
 	}
