@@ -97,29 +97,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := controllers.NewNeuronEXReconciler(mgr).SetupWithManager(mgr); err != nil {
+	if err = controllers.NewNeuronEXReconciler(mgr).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "NeuronEX")
 		os.Exit(1)
 	}
-
-	if err := controllers.NewNeuronReconciler(mgr).SetupWithManager(mgr); err != nil {
+	if err = controllers.NewEKuiperReconciler(mgr).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "EKuiper")
+		os.Exit(1)
+	}
+	if err = controllers.NewNeuronReconciler(mgr).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Neuron")
 		os.Exit(1)
 	}
-
 	//+kubebuilder:scaffold:builder
 
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err = mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}

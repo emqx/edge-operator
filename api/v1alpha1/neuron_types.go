@@ -28,10 +28,14 @@ import (
 type NeuronSpec struct {
 	EdgePodSpec `json:",inline"`
 
-	Neuron *corev1.Container `json:"neuron,omitempty"`
+	Neuron corev1.Container `json:"neuron,omitempty"`
 
 	ServiceTemplate     *corev1.Service               `json:"serviceTemplate,omitempty"`
 	VolumeClaimTemplate *corev1.PersistentVolumeClaim `json:"volumeClaimTemplate,omitempty"`
+}
+
+func (n *Neuron) GetComponentType() ComponentType {
+	return ComponentTypeNeuron
 }
 
 func (n *Neuron) GetEdgePodSpec() EdgePodSpec {
@@ -42,10 +46,10 @@ func (n *Neuron) SetEdgePodSpec(spec EdgePodSpec) {
 }
 
 func (n *Neuron) GetNeuron() *corev1.Container {
-	return n.Spec.Neuron
+	return &n.Spec.Neuron
 }
 func (n *Neuron) SetNeuron(container *corev1.Container) {
-	n.Spec.Neuron = container
+	n.Spec.Neuron = *container.DeepCopy()
 }
 
 func (n *Neuron) GetEKuiper() *corev1.Container {

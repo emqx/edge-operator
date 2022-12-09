@@ -4,6 +4,7 @@
 resources:
 - bases/edge.emqx.io_neuronexs.yaml
 - bases/edge.emqx.io_neurons.yaml
+- bases/edge.emqx.io_ekuipers.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

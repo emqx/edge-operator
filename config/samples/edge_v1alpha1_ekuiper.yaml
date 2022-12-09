@@ -1,0 +1,15 @@
+apiVersion: edge.emqx.io/v1alpha1
+kind: EKuiper
+metadata:
+  labels:
+    app.kubernetes.io/name: ekuiper
+    app.kubernetes.io/instance: ekuiper-sample
+    app.kubernetes.io/part-of: edge-operator
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: edge-operator
+  name: ekuiper-sample
+spec:
+  ekuiper:
+    name: "ekuiper"
+    image: lfedge/ekuiper:latest
+    imagePullPolicy: IfNotPresent

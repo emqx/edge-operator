@@ -27,11 +27,15 @@ import (
 type NeuronEXSpec struct {
 	EdgePodSpec `json:",inline"`
 
-	Neuron  *corev1.Container `json:"neuron,omitempty"`
-	EKuiper *corev1.Container `json:"ekuiper,omitempty"`
+	Neuron  corev1.Container `json:"neuron,omitempty"`
+	EKuiper corev1.Container `json:"ekuiper,omitempty"`
 
 	VolumeClaimTemplate *corev1.PersistentVolumeClaim `json:"volumeClaimTemplate,omitempty"`
 	ServiceTemplate     *corev1.Service               `json:"serviceTemplate,omitempty"`
+}
+
+func (n *NeuronEX) GetComponentType() ComponentType {
+	return ComponentTypeNeuronEx
 }
 
 func (n *NeuronEX) GetEdgePodSpec() EdgePodSpec {
@@ -42,17 +46,17 @@ func (n *NeuronEX) SetEdgePodSpec(spec EdgePodSpec) {
 }
 
 func (n *NeuronEX) GetNeuron() *corev1.Container {
-	return n.Spec.Neuron
+	return &n.Spec.Neuron
 }
 func (n *NeuronEX) SetNeuron(container *corev1.Container) {
-	n.Spec.Neuron = container
+	n.Spec.Neuron = *container.DeepCopy()
 }
 
 func (n *NeuronEX) GetEKuiper() *corev1.Container {
-	return n.Spec.EKuiper
+	return &n.Spec.EKuiper
 }
 func (n *NeuronEX) SetEKuiper(container *corev1.Container) {
-	n.Spec.EKuiper = container
+	n.Spec.EKuiper = *container.DeepCopy()
 }
 
 func (n *NeuronEX) GetVolumeClaimTemplate() *corev1.PersistentVolumeClaim {
