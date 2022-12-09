@@ -114,7 +114,7 @@ func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
 	}
 
 	if ins.GetComponentType() == edgev1alpha1.ComponentTypeNeuronEx {
-		cm, _ := internal.ConfigMaps.Get(internal.EKuiperToolConfig)
+		cm, _ := internal.ConfigMaps[internal.EKuiperToolConfig]
 		volumes = append(volumes, internal.GetVolume(ins, cm))
 	}
 	return
@@ -176,7 +176,7 @@ func getEkuiperContainer(ins edgev1alpha1.EdgeInterface, conf *corev1.Container)
 }
 
 func getEkuiperToolContainer(conf *corev1.Container) corev1.Container {
-	cm, _ := internal.ConfigMaps.Get(internal.EKuiperToolConfig)
+	cmi, _ := internal.ConfigMaps[internal.EKuiperToolConfig]
 
 	// TODO: Is it the latest version of eKuiper tool compatible with the eKuiper that user specifies?
 	container := corev1.Container{
@@ -185,8 +185,8 @@ func getEkuiperToolContainer(conf *corev1.Container) corev1.Container {
 		ImagePullPolicy: conf.ImagePullPolicy,
 		VolumeMounts: []corev1.VolumeMount{
 			{
-				Name:      cm.MountName,
-				MountPath: cm.MountPath,
+				Name:      cmi.MountName,
+				MountPath: cmi.MountPath,
 				ReadOnly:  true,
 			},
 		},
