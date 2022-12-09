@@ -109,7 +109,15 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Neuron")
 		os.Exit(1)
 	}
+
 	//+kubebuilder:scaffold:builder
+
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = (&edgev1alpha1.NeuronEX{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "NeuronEX")
+			os.Exit(1)
+		}
+	}
 
 	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
