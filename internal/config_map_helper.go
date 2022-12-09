@@ -1,7 +1,11 @@
 package internal
 
 import (
-	"sort"
+	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
+	jsoniter "github.com/json-iterator/go"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -15,56 +19,22 @@ type ConfigMapInfo struct {
 	MountPath string
 	// spec.volume.name the full config map name is {hdb.name}-suffix
 	MapNameSuffix string
-	MapKey        string
-	MapPath       string
+	Data          map[string]string
 }
 
-type ConfigmapSet struct {
-	cms map[string]*ConfigMapInfo
-}
-
-var ConfigMaps = ConfigmapSet{
-	cms: map[string]*ConfigMapInfo{
-		EKuiperToolConfig: {
-			MountName:     EKuiperToolConfig,
-			MountPath:     "/kuiper-kubernetes-tool/sample",
-			MapNameSuffix: "ekuiper-tool-config",
-			MapKey:        "neuronStream.json",
+var ConfigMaps = map[string]*ConfigMapInfo{
+	EKuiperToolConfig: {
+		MountName:     EKuiperToolConfig,
+		MountPath:     "/kuiper-kubernetes-tool/sample",
+		MapNameSuffix: "ekuiper-tool-config",
+		Data: map[string]string{
+			"neuronStream.json": getEKuiperToolConfig(),
 		},
 	},
 }
 
-// Visit visits the config map in lexicographical order, calling fn for each.
-func (c *ConfigmapSet) Visit(fn func(m ConfigMapInfo)) {
-	for _, flag := range sortConfigMaps(c.cms) {
-		fn(*c.cms[flag])
-	}
-}
-
-// Get returns the config map of given name
-func (c *ConfigmapSet) Get(name string) (ConfigMapInfo, bool) {
-	if m, ok := c.cms[name]; ok {
-		return *m, true
-	}
-	return ConfigMapInfo{}, false
-}
-
-// sortConfigMaps returns the flags as a slice in lexicographical sorted order.
-func sortConfigMaps(cms map[string]*ConfigMapInfo) []string {
-	result := make([]string, len(cms))
-	i := 0
-	for name := range cms {
-		result[i] = name
-		i++
-	}
-	sort.SliceStable(result, func(i, j int) bool {
-		return result[i] < result[j]
-	})
-	return result
-}
-
-func GetEKuiperToolConfig() map[string]any {
-	return map[string]any{
+func getEKuiperToolConfig() string {
+	config := map[string]any{
 		"command": map[string]interface{}{
 			"url":         "/streams",
 			"description": "create neuronStream",
@@ -74,4 +44,25 @@ func GetEKuiperToolConfig() map[string]any {
 			},
 		},
 	}
+	res, _ := jsoniter.MarshalToString(config)
+	return res
+}
+
+func GetConfigMap(ins client.Object, configName string, compType edgev1alpha1.ComponentType) corev1.ConfigMap {
+	cmi, has := ConfigMaps[configName]
+	if !has {
+		panic("no such config map name " + configName)
+	}
+
+	cm := corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: corev1.SchemeGroupVersion.String(),
+		},
+		ObjectMeta: GetObjectMetadata(ins, nil, compType),
+		Data:       cmi.Data,
+	}
+	cm.Name = GetResNameOnPanic(ins, cmi.MapNameSuffix)
+
+	return cm
 }

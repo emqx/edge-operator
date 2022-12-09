@@ -38,7 +38,7 @@ func GetPvcName(ins edgev1alpha1.EdgeInterface, shortName string) string {
 	return GetResNameOnPanic(ins, shortName)
 }
 
-func GetVolume(ins edgev1alpha1.EdgeInterface, m ConfigMapInfo) corev1.Volume {
+func GetVolume(ins edgev1alpha1.EdgeInterface, m *ConfigMapInfo) corev1.Volume {
 	return corev1.Volume{
 		Name: m.MountName,
 		VolumeSource: corev1.VolumeSource{
