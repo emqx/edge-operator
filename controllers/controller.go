@@ -2,8 +2,9 @@ package controllers
 
 import (
 	"context"
-	emperror "emperror.dev/errors"
 	"fmt"
+
+	emperror "emperror.dev/errors"
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
@@ -94,7 +95,6 @@ func (ec *EdgeController) reconcile(ctx context.Context, req ctrl.Request, cr cl
 	default:
 		panic("unknown kind")
 	}
-	return ctrl.Result{}, nil
 }
 
 func subReconcile[T CR](ec *EdgeController, ctx context.Context, obj client.Object, subReconcilers []subReconciler[T]) (
