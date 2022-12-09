@@ -27,5 +27,4 @@ spec:
     image: emqx/neuron:2.2.8
   ekuiper:
     name: ekuiper
-    image: lfedge/ekuiper:1.7.1-slim
-  nodeName: minikube
+    image: lfedge/ekuiper:latest

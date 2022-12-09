@@ -52,7 +52,7 @@ func processRequeue(requeue *requeue, subReconciler interface{}, object runtime.
 		curLog.Error(err, "Error in reconciliation")
 		return ctrl.Result{}, err
 	}
-	curLog.Info("Reconciliation terminated early", "message", requeue.message)
+	curLog.Info("Reconciliation terminated early", "kind", object.GetObjectKind(), "message", requeue.message)
 
 	return ctrl.Result{Requeue: true, RequeueAfter: requeue.delay}, nil
 }

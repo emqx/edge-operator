@@ -1,13 +1,18 @@
 package v1alpha1
 
 import (
+	"fmt"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // +kubebuilder:object:generate=false
 type EdgeInterface interface {
 	client.Object
+	metav1.ObjectMetaAccessor
+
+	GetComponentType() ComponentType
 
 	GetEdgePodSpec() EdgePodSpec
 	SetEdgePodSpec(EdgePodSpec)
@@ -280,4 +285,20 @@ type EdgePodSpec struct {
 	// +k8s:conversion-gen=false
 	// +optional
 	HostUsers *bool `json:"hostUsers,omitempty" protobuf:"bytes,37,opt,name=hostUsers"`
+}
+
+type ComponentType string
+
+const (
+	ComponentTypeNeuronEx ComponentType = "neuron-ex"
+	ComponentTypeNeuron   ComponentType = "neuron"
+	ComponentTypeEKuiper  ComponentType = "ekuiper"
+)
+
+func (ct ComponentType) GetResName(ins client.Object) string {
+	return fmt.Sprintf("%s-%s", ins.GetName(), ct)
+}
+
+func (ct ComponentType) String() string {
+	return string(ct)
 }
