@@ -6,7 +6,6 @@ require (
 	emperror.dev/errors v0.8.0
 	github.com/banzaicloud/k8s-objectmatcher v1.8.0
 	github.com/go-logr/logr v1.2.3
-	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
 	k8s.io/api v0.25.0
