@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"github.com/emqx/edge-operator/internal"
 	appsv1 "k8s.io/api/apps/v1"
@@ -114,7 +115,7 @@ func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
 	}
 
 	if ins.GetComponentType() == edgev1alpha1.ComponentTypeNeuronEx {
-		cm, _ := internal.ConfigMaps[internal.EKuiperToolConfig]
+		cm := internal.ConfigMaps[internal.EKuiperToolConfig]
 		volumes = append(volumes, internal.GetVolume(ins, cm))
 	}
 	return
@@ -176,7 +177,7 @@ func getEkuiperContainer(ins edgev1alpha1.EdgeInterface, conf *corev1.Container)
 }
 
 func getEkuiperToolContainer(conf *corev1.Container) corev1.Container {
-	cmi, _ := internal.ConfigMaps[internal.EKuiperToolConfig]
+	cmi := internal.ConfigMaps[internal.EKuiperToolConfig]
 
 	// TODO: Is it the latest version of eKuiper tool compatible with the eKuiper that user specifies?
 	container := corev1.Container{

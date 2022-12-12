@@ -31,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	edgeemqxiov1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"github.com/emqx/edge-operator/controllers"
 	//+kubebuilder:scaffold:imports
@@ -45,7 +44,6 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(edgeemqxiov1alpha1.AddToScheme(scheme))
 	utilruntime.Must(edgev1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }

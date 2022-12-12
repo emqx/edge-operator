@@ -1,18 +1,17 @@
 package internal
 
 import (
+	"strings"
+
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 // GetObjectMetadata returns the ObjectMetadata for a component
 func GetObjectMetadata(ins client.Object, base *metav1.ObjectMeta, compType edgev1alpha1.ComponentType) metav1.ObjectMeta {
-	var metadata *metav1.ObjectMeta
-
-	metadata = &metav1.ObjectMeta{}
+	metadata := &metav1.ObjectMeta{}
 	if base != nil {
 		metadata.Annotations = base.Annotations
 		metadata.Labels = base.Labels
