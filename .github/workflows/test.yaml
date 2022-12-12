@@ -1,4 +1,4 @@
-name: Run emqx operator test case
+name: Run edge operator test case
 
 concurrency:
   group: test-${{ github.event_name }}-${{ github.ref }}
