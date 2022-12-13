@@ -75,6 +75,15 @@ func (n *NeuronEX) SetServiceTemplate(service *corev1.Service) {
 
 // NeuronEXStatus defines the observed state of NeuronEX
 type NeuronEXStatus struct {
+	EdgeStatus `json:",inline"`
+}
+
+func (n *NeuronEX) GetStatus() EdgeStatus {
+	return n.Status.EdgeStatus
+}
+
+func (n *NeuronEX) SetStatus(status EdgeStatus) {
+	n.Status.EdgeStatus = status
 }
 
 //+kubebuilder:object:root=true
