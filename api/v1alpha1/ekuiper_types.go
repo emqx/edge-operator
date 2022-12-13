@@ -72,8 +72,15 @@ func (ek *EKuiper) SetServiceTemplate(service *corev1.Service) {
 
 // EKuiperStatus defines the observed state of EKuiper
 type EKuiperStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	EdgeStatus `json:",inline"`
+}
+
+func (n *EKuiper) GetStatus() EdgeStatus {
+	return n.Status.EdgeStatus
+}
+
+func (n *EKuiper) SetStatus(status EdgeStatus) {
+	n.Status.EdgeStatus = status
 }
 
 //+kubebuilder:object:root=true

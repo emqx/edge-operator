@@ -75,6 +75,7 @@ func (ec *EdgeController) reconcile(ctx context.Context, req ctrl.Request, cr cl
 			addNeuronExPVC{},
 			addNeuronExDeploy{},
 			addNeuronExService{},
+			addNeuronEXStatus{},
 		}
 		return subReconcile[*edgev1alpha1.NeuronEX](ec, ctx, cr, subs)
 	case *edgev1alpha1.EKuiper:
@@ -82,6 +83,7 @@ func (ec *EdgeController) reconcile(ctx context.Context, req ctrl.Request, cr cl
 			addEKuiperPVC{},
 			addEkuiperDeployment{},
 			addEkuiperService{},
+			addEkuiperStatus{},
 		}
 		return subReconcile[*edgev1alpha1.EKuiper](ec, ctx, cr, subs)
 	case *edgev1alpha1.Neuron:
@@ -89,9 +91,9 @@ func (ec *EdgeController) reconcile(ctx context.Context, req ctrl.Request, cr cl
 			addNeuronPVC{},
 			addNeuronDeployment{},
 			addNeuronService{},
+			addNeuronStatus{},
 		}
 		return subReconcile[*edgev1alpha1.Neuron](ec, ctx, cr, subs)
-
 	default:
 		panic("unknown kind")
 	}
