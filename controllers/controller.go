@@ -71,27 +71,30 @@ func (ec *EdgeController) reconcile(ctx context.Context, req ctrl.Request, cr cl
 	switch cr.(type) {
 	case *edgev1alpha1.NeuronEX:
 		subs := []subReconciler[*edgev1alpha1.NeuronEX]{
+			updateNeuronEXStatus{},
 			addEkuiperTool{},
 			addNeuronExPVC{},
 			addNeuronExDeploy{},
 			addNeuronExService{},
-			addNeuronEXStatus{},
+			updateNeuronEXStatus{},
 		}
 		return subReconcile[*edgev1alpha1.NeuronEX](ec, ctx, cr, subs)
 	case *edgev1alpha1.EKuiper:
 		subs := []subReconciler[*edgev1alpha1.EKuiper]{
+			updateEkuiperStatus{},
 			addEKuiperPVC{},
 			addEkuiperDeployment{},
 			addEkuiperService{},
-			addEkuiperStatus{},
+			updateEkuiperStatus{},
 		}
 		return subReconcile[*edgev1alpha1.EKuiper](ec, ctx, cr, subs)
 	case *edgev1alpha1.Neuron:
 		subs := []subReconciler[*edgev1alpha1.Neuron]{
+			updateNeuronStatus{},
 			addNeuronPVC{},
 			addNeuronDeployment{},
 			addNeuronService{},
-			addNeuronStatus{},
+			updateNeuronStatus{},
 		}
 		return subReconcile[*edgev1alpha1.Neuron](ec, ctx, cr, subs)
 	default:
@@ -126,8 +129,7 @@ func subReconcile[T CR](ec *EdgeController, ctx context.Context, obj client.Obje
 	}
 
 	if delayedRequeue {
-		logger.Info("Edge controller was not fully reconciled by reconciliation process",
-			"kind", obj.GetObjectKind())
+		logger.Info("not fully reconciled by reconciliation process", "kind", obj.GetObjectKind())
 		return ctrl.Result{Requeue: true}, nil
 	}
 

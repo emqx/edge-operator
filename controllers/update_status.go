@@ -9,34 +9,34 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type addEkuiperStatus struct{}
+type updateEkuiperStatus struct{}
 
-func (a addEkuiperStatus) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.EKuiper) *requeue {
+func (u updateEkuiperStatus) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.EKuiper) *requeue {
 	logger := log.WithValues("namespace", instance.Namespace, "instance", instance.Name, "reconciler",
-		"add eKuiper Status")
+		"update eKuiper Status")
 
-	return addStatus(ctx, r, instance, logger)
+	return updateStatus(ctx, r, instance, logger)
 }
 
-type addNeuronStatus struct{}
+type updateNeuronStatus struct{}
 
-func (a addNeuronStatus) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.Neuron) *requeue {
+func (u updateNeuronStatus) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.Neuron) *requeue {
 	logger := log.WithValues("namespace", instance.Namespace, "instance", instance.Name, "reconciler",
-		"add eKuiper Status")
+		"update eKuiper Status")
 
-	return addStatus(ctx, r, instance, logger)
+	return updateStatus(ctx, r, instance, logger)
 }
 
-type addNeuronEXStatus struct{}
+type updateNeuronEXStatus struct{}
 
-func (a addNeuronEXStatus) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.NeuronEX) *requeue {
+func (u updateNeuronEXStatus) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.NeuronEX) *requeue {
 	logger := log.WithValues("namespace", instance.Namespace, "instance", instance.Name, "reconciler",
-		"add eKuiper Status")
+		"update eKuiper Status")
 
-	return addStatus(ctx, r, instance, logger)
+	return updateStatus(ctx, r, instance, logger)
 }
 
-func addStatus(ctx context.Context, r *EdgeController, instance edgev1alpha1.EdgeInterface, logger logr.Logger) *requeue {
+func updateStatus(ctx context.Context, r *EdgeController, instance edgev1alpha1.EdgeInterface, logger logr.Logger) *requeue {
 	podList := &corev1.PodList{}
 	if err := r.List(ctx, podList,
 		client.InNamespace(instance.GetNamespace()),
@@ -53,7 +53,7 @@ func addStatus(ctx context.Context, r *EdgeController, instance edgev1alpha1.Edg
 			Phase: podList.Items[0].Status.Phase,
 		},
 	)
-	logger.Info("update eKuiper status")
+	logger.Info("Update status")
 	if err := r.Status().Update(ctx, instance); err != nil {
 		return &requeue{curError: err}
 	}

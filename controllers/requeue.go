@@ -39,20 +39,19 @@ func processRequeue(requeue *requeue, subReconciler interface{}, object runtime.
 	}
 
 	err := requeue.curError
-	if err != nil && k8sErrors.IsConflict(err) {
+	if k8sErrors.IsConflict(err) {
 		err = nil
 		if requeue.delay == time.Duration(0) {
-			requeue.delay = time.Minute
+			requeue.delay = time.Second * time.Duration(15)
 		}
 	}
 
-	recorder.Event(object, corev1.EventTypeNormal, "ReconciliationTerminatedEarly", requeue.message)
-
 	if err != nil {
+		recorder.Event(object, corev1.EventTypeWarning, "ReconciliationError", err.Error())
 		curLog.Error(err, "Error in reconciliation")
 		return ctrl.Result{}, err
 	}
+	recorder.Event(object, corev1.EventTypeNormal, "ReconciliationTerminatedEarly", requeue.message)
 	curLog.Info("Reconciliation terminated early", "kind", object.GetObjectKind(), "message", requeue.message)
-
 	return ctrl.Result{Requeue: true, RequeueAfter: requeue.delay}, nil
 }
