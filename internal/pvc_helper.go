@@ -11,8 +11,7 @@ func GetPVC(ins edgev1alpha1.EdgeInterface, shortName string) (pvc corev1.Persis
 		pvc = *ins.GetVolumeClaimTemplate().DeepCopy()
 	}
 
-	pvc.ObjectMeta = GetObjectMetadata(ins.GetVolumeClaimTemplate())
-	pvc.ObjectMeta.Name = GetPvcName(ins, shortName)
+	pvc.ObjectMeta = GetObjectMetadata(ins.GetVolumeClaimTemplate(), GetPvcName(ins, shortName))
 
 	if pvc.Spec.AccessModes == nil {
 		pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}

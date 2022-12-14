@@ -9,8 +9,9 @@ import (
 )
 
 // GetObjectMetadata returns the ObjectMetadata for a component
-func GetObjectMetadata(ins client.Object) metav1.ObjectMeta {
+func GetObjectMetadata(ins client.Object, name string) metav1.ObjectMeta {
 	metadata := &metav1.ObjectMeta{
+		Name:        name,
 		Namespace:   ins.GetNamespace(),
 		Labels:      ins.GetLabels(),
 		Annotations: ins.GetAnnotations(),

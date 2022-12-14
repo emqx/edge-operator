@@ -52,11 +52,7 @@ func getDeployment(instance edgev1alpha1.EdgeInterface) appsv1.Deployment {
 	podTemp := getPodTemplate(instance)
 
 	deploy := appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: appsv1.SchemeGroupVersion.String(),
-		},
-		ObjectMeta: internal.GetObjectMetadata(instance),
+		ObjectMeta: internal.GetObjectMetadata(instance, instance.GetComponentType().GetResName(instance)),
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &[]int32{1}[0],
 			Strategy: appsv1.DeploymentStrategy{
@@ -68,15 +64,14 @@ func getDeployment(instance edgev1alpha1.EdgeInterface) appsv1.Deployment {
 			Template: podTemp,
 		},
 	}
-
-	deploy.Name = instance.GetComponentType().GetResName(instance)
+	deploy.SetGroupVersionKind(appsv1.SchemeGroupVersion.WithKind("Deployment"))
 
 	return deploy
 }
 
 func getPodTemplate(instance edgev1alpha1.EdgeInterface) corev1.PodTemplateSpec {
 	pod := corev1.PodTemplateSpec{
-		ObjectMeta: internal.GetObjectMetadata(instance),
+		ObjectMeta: internal.GetObjectMetadata(instance, ""),
 		Spec:       getPodSpec(instance),
 	}
 
