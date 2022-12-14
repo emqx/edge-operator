@@ -21,7 +21,7 @@ func GetDeployment(ins metaObject, compType edgev1alpha1.ComponentType, podSpec 
 			Kind:       "Deployment",
 			APIVersion: appsv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: GetObjectMetadata(ins, meta, compType),
+		ObjectMeta: GetObjectMetadata(ins, meta),
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &[]int32{1}[0],
 			Strategy: appsv1.DeploymentStrategy{

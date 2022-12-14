@@ -7,6 +7,7 @@ import (
 	"github.com/emqx/edge-operator/internal"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type addEkuiperDeployment struct{}
@@ -55,10 +56,9 @@ func getDeployment(instance edgev1alpha1.EdgeInterface) appsv1.Deployment {
 }
 
 func getPodTemplate(instance edgev1alpha1.EdgeInterface) corev1.PodTemplateSpec {
-	compType := instance.GetComponentType()
-
+	base := instance.GetObjectMeta().(*metav1.ObjectMeta)
 	pod := corev1.PodTemplateSpec{
-		ObjectMeta: internal.GetObjectMetadata(instance, nil, compType),
+		ObjectMeta: internal.GetObjectMetadata(instance, base),
 		Spec:       getPodSpec(instance),
 	}
 
@@ -75,17 +75,17 @@ func getPodSpec(instance edgev1alpha1.EdgeInterface) corev1.PodSpec {
 	switch instance.GetComponentType() {
 	case edgev1alpha1.ComponentTypeNeuronEx:
 		podSpec.Containers = []corev1.Container{
-			getNeuronContainer(instance, instance.GetNeuron()),
-			getEkuiperContainer(instance, instance.GetEKuiper()),
-			getEkuiperToolContainer(instance.GetEKuiper()),
+			getNeuronContainer(instance),
+			getEkuiperContainer(instance),
+			getEkuiperToolContainer(instance),
 		}
 	case edgev1alpha1.ComponentTypeEKuiper:
 		podSpec.Containers = []corev1.Container{
-			getEkuiperContainer(instance, instance.GetEKuiper()),
+			getEkuiperContainer(instance),
 		}
 	case edgev1alpha1.ComponentTypeNeuron:
 		podSpec.Containers = []corev1.Container{
-			getNeuronContainer(instance, instance.GetNeuron()),
+			getNeuronContainer(instance),
 		}
 	default:
 		panic("unknown component " + instance.GetComponentType())
@@ -121,12 +121,8 @@ func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
 	return
 }
 
-func getNeuronContainer(ins edgev1alpha1.EdgeInterface, conf *corev1.Container) corev1.Container {
-	container := conf.DeepCopy()
-	if container.Name == "" {
-		container.Name = ins.GetComponentType().String()
-	}
-
+func getNeuronContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
+	container := ins.GetNeuron().DeepCopy()
 	var pvcs []pvcInfo
 	if ins.GetComponentType() == edgev1alpha1.ComponentTypeNeuronEx {
 		pvcs = defaultPVC[edgev1alpha1.ComponentTypeNeuronEx]
@@ -143,28 +139,8 @@ func getNeuronContainer(ins edgev1alpha1.EdgeInterface, conf *corev1.Container) 
 	return *container
 }
 
-func getEkuiperContainer(ins edgev1alpha1.EdgeInterface, conf *corev1.Container) corev1.Container {
-	container := conf.DeepCopy()
-	if container.Name == "" {
-		container.Name = ins.GetComponentType().String()
-	}
-
-	// TODO: add default value in webhook
-	extendEnv(container, []corev1.EnvVar{
-		{
-			Name:  "MQTT_SOURCE__DEFAULT__SERVER",
-			Value: "tcp://broker.emqx.io:1883",
-		},
-		{
-			Name:  "KUIPER__BASIC__FILELOG",
-			Value: "false",
-		},
-		{
-			Name:  "KUIPER__BASIC__CONSOLELOG",
-			Value: "true",
-		},
-	})
-
+func getEkuiperContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
+	container := ins.GetEKuiper().DeepCopy()
 	pvcs := defaultPVC[edgev1alpha1.ComponentTypeEKuiper]
 	for i := range pvcs {
 		container.VolumeMounts = append(container.VolumeMounts,
@@ -176,7 +152,8 @@ func getEkuiperContainer(ins edgev1alpha1.EdgeInterface, conf *corev1.Container)
 	return *container
 }
 
-func getEkuiperToolContainer(conf *corev1.Container) corev1.Container {
+func getEkuiperToolContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
+	conf := ins.GetEKuiper()
 	cmi := internal.ConfigMaps[internal.EKuiperToolConfig]
 
 	// TODO: Is it the latest version of eKuiper tool compatible with the eKuiper that user specifies?

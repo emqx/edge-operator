@@ -111,6 +111,14 @@ func main() {
 	//+kubebuilder:scaffold:builder
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = (&edgev1alpha1.Neuron{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Neuron")
+			os.Exit(1)
+		}
+		if err = (&edgev1alpha1.EKuiper{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "EKuiper")
+			os.Exit(1)
+		}
 		if err = (&edgev1alpha1.NeuronEX{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "NeuronEX")
 			os.Exit(1)

@@ -12,6 +12,7 @@ patchesStrategicMerge:
 # patches here are for enabling the conversion webhook for each CRD
 #- patches/webhook_in_neuronexs.yaml
 #- patches/webhook_in_neurons.yaml
+#- patches/webhook_in_ekuiper.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
