@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-var log = logf.Log.WithName("EDGE Controller")
+var log = logf.Log.WithName("Edge Controller")
 
 type CR interface {
 	*edgev1alpha1.EKuiper | *edgev1alpha1.NeuronEX | *edgev1alpha1.Neuron

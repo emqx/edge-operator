@@ -14,14 +14,12 @@ type metaObject interface {
 }
 
 func GetDeployment(ins metaObject, compType edgev1alpha1.ComponentType, podSpec *corev1.PodTemplateSpec) appsv1.Deployment {
-	meta := ins.GetObjectMeta().(*metav1.ObjectMeta)
-
 	deploy := appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: appsv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: GetObjectMetadata(ins, meta),
+		ObjectMeta: GetObjectMetadata(ins),
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &[]int32{1}[0],
 			Strategy: appsv1.DeploymentStrategy{

@@ -2,9 +2,10 @@ package controllers
 
 import (
 	"context"
+
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
-	"github.com/emqx/edge-operator/internal"
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type addEkuiperService struct{}
@@ -37,9 +38,10 @@ func addService(ctx context.Context, r *EdgeController, ins edgev1alpha1.EdgeInt
 	if ins.GetServiceTemplate() == nil {
 		return nil
 	}
+	svc := ins.GetServiceTemplate().DeepCopy()
+	svc.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Service"))
 
-	svc := internal.GetService(ins, ins.GetServiceTemplate())
-	if err := r.createOrUpdate(ctx, ins, &svc, logger); err != nil {
+	if err := r.createOrUpdate(ctx, ins, svc, logger); err != nil {
 		return &requeue{curError: err}
 	}
 	return nil

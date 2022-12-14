@@ -192,3 +192,14 @@ func mergeServicePort(svc *corev1.Service, required []corev1.ServicePort) {
 	}
 	svc.Spec.Ports = target
 }
+
+func setDefaultVolume(ins EdgeInterface) {
+	vol := ins.GetVolumeClaimTemplate()
+	if vol == nil {
+		return
+	}
+
+	instanceMeta := *ins.GetObjectMeta().(*metav1.ObjectMeta)
+	mergeAnnotations(&vol.ObjectMeta, instanceMeta)
+	mergeLabelsInMetadata(&vol.ObjectMeta, instanceMeta)
+}

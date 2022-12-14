@@ -87,17 +87,18 @@ jobs:
       - name: Get metadata
         id: meta
         run: |
+          namespace=$(yq '.metadata.namespace' ${{ matrix.file }})
+          if [ "${namespace}" = "null" ]; then namespace="default"; fi
+          echo "namespace=${namespace}" >> $GITHUB_OUTPUT
           name=$(yq '.metadata.name' ${{ matrix.file }})
           echo "name=${name}" >> $GITHUB_OUTPUT
-          namespace=$(yq '.metadata.namespace' ${{ matrix.file }})
-          echo "namespace=${namespace}" >> $GITHUB_OUTPUT
           kind=$(yq '.kind' ${{ matrix.file }})
           echo "kind=${kind}" >> $GITHUB_OUTPUT
       - run: kubectl apply -f ${{ matrix.file }}
       - name: Check status
         run: |
           sleep 5
-          kubectl wait --for=condition=Ready pods -l "app.kubernetes.io/name=${{ steps.meta.outputs.name }}" -n ${{ steps.meta.outputs.namespace }} --timeout=120s
+          kubectl wait --for=condition=Ready pods -l "app.kubernetes.io/instance=${{ steps.meta.outputs.name }}" -n ${{ steps.meta.outputs.namespace }} --timeout=120s
       # - name: Check CR status
       #   timeout-minutes: 1
       #   run: |
