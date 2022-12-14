@@ -54,6 +54,7 @@ func (r *EKuiper) Default() {
 	extendEnv(&r.Spec.EKuiper, defValue.Spec.EKuiper.Env)
 	setDefaultEKuiperPort(&r.Spec.EKuiper, defValue.Spec.EKuiper.Env)
 	setDefaultService(r)
+	setDefaultVolume(r)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

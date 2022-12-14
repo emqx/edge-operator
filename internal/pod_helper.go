@@ -9,14 +9,13 @@ import (
 )
 
 // GetObjectMetadata returns the ObjectMetadata for a component
-func GetObjectMetadata(ins client.Object, base *metav1.ObjectMeta) metav1.ObjectMeta {
-	metadata := &metav1.ObjectMeta{}
-	if base != nil {
-		metadata.Annotations = base.Annotations
-		metadata.Labels = base.Labels
-		delete(metadata.Annotations, corev1.LastAppliedConfigAnnotation)
+func GetObjectMetadata(ins client.Object) metav1.ObjectMeta {
+	metadata := &metav1.ObjectMeta{
+		Namespace:   ins.GetNamespace(),
+		Labels:      ins.GetLabels(),
+		Annotations: ins.GetAnnotations(),
 	}
-	metadata.Namespace = ins.GetNamespace()
+	delete(metadata.Annotations, corev1.LastAppliedConfigAnnotation)
 
 	if metadata.Labels == nil {
 		metadata.Labels = make(map[string]string)

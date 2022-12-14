@@ -7,7 +7,6 @@ import (
 	"github.com/emqx/edge-operator/internal"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type addEkuiperDeployment struct{}
@@ -56,9 +55,8 @@ func getDeployment(instance edgev1alpha1.EdgeInterface) appsv1.Deployment {
 }
 
 func getPodTemplate(instance edgev1alpha1.EdgeInterface) corev1.PodTemplateSpec {
-	base := instance.GetObjectMeta().(*metav1.ObjectMeta)
 	pod := corev1.PodTemplateSpec{
-		ObjectMeta: internal.GetObjectMetadata(instance, base),
+		ObjectMeta: internal.GetObjectMetadata(instance),
 		Spec:       getPodSpec(instance),
 	}
 

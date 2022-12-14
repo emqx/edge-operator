@@ -53,6 +53,7 @@ func (r *Neuron) Default() {
 	mergeAnnotations(&r.ObjectMeta, defValue.ObjectMeta)
 	extendEnv(&r.Spec.Neuron, defValue.Spec.Neuron.Env)
 	setDefaultService(r)
+	setDefaultVolume(r)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

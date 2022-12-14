@@ -4,7 +4,6 @@ import (
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func GetPVC(ins edgev1alpha1.EdgeInterface, shortName string) (pvc corev1.PersistentVolumeClaim) {
@@ -12,7 +11,7 @@ func GetPVC(ins edgev1alpha1.EdgeInterface, shortName string) (pvc corev1.Persis
 		pvc = *ins.GetVolumeClaimTemplate().DeepCopy()
 	}
 
-	pvc.ObjectMeta = getPvcMetadata(ins)
+	pvc.ObjectMeta = GetObjectMetadata(ins.GetVolumeClaimTemplate())
 	pvc.ObjectMeta.Name = GetPvcName(ins, shortName)
 
 	if pvc.Spec.AccessModes == nil {
@@ -48,14 +47,4 @@ func GetVolume(ins edgev1alpha1.EdgeInterface, m *ConfigMapInfo) corev1.Volume {
 			},
 		},
 	}
-}
-
-// getPvcMetadata returns the metadata for a PVC
-func getPvcMetadata(ins edgev1alpha1.EdgeInterface) metav1.ObjectMeta {
-	var customMetadata *metav1.ObjectMeta
-
-	if ins.GetVolumeClaimTemplate() != nil {
-		customMetadata = &ins.GetVolumeClaimTemplate().ObjectMeta
-	}
-	return GetObjectMetadata(ins, customMetadata)
 }
