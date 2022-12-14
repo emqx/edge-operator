@@ -317,7 +317,7 @@ type EdgeStatus struct {
 type ComponentType string
 
 const (
-	ComponentTypeNeuronEx ComponentType = "neuron-ex"
+	ComponentTypeNeuronEx ComponentType = "neuronex"
 	ComponentTypeNeuron   ComponentType = "neuron"
 	ComponentTypeEKuiper  ComponentType = "ekuiper"
 )
