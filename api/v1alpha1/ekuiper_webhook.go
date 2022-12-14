@@ -49,8 +49,8 @@ func (r *EKuiper) Default() {
 		},
 	}
 
-	mergeLabelsInMetadata(&r.ObjectMeta, defValue.ObjectMeta)
-	mergeAnnotations(&r.ObjectMeta, defValue.ObjectMeta)
+	mergeLabels(r.GetLabels(), defValue.GetLabels())
+	mergeAnnotations(r.GetAnnotations(), defValue.GetAnnotations())
 	extendEnv(&r.Spec.EKuiper, defValue.Spec.EKuiper.Env)
 	mergeContainerPorts(r.GetEKuiper(), defValue.GetEKuiper())
 	setDefaultService(r)

@@ -79,23 +79,23 @@ func extendEnv(container *corev1.Container, env []corev1.EnvVar) {
 // on object's metadata.
 //
 // This will return whether the target's labels have changed.
-func mergeLabelsInMetadata(target *metav1.ObjectMeta, desired metav1.ObjectMeta) bool {
-	if target.Labels == nil {
-		target.Labels = make(map[string]string)
+func mergeLabels(target, desired map[string]string) bool {
+	if target == nil {
+		target = make(map[string]string)
 	}
-	return mergeMap(target.Labels, desired.Labels)
+	return mergeMap(target, desired)
 }
 
 // mergeAnnotations merges the annotations specified by the operator into
 // on object's metadata.
 //
 // This will return whether the target's annotations have changed.
-func mergeAnnotations(target *metav1.ObjectMeta, desired metav1.ObjectMeta) bool {
-	if target.Annotations == nil {
-		target.Annotations = make(map[string]string)
+func mergeAnnotations(target, desired map[string]string) bool {
+	if target == nil {
+		target = make(map[string]string)
 	}
-	delete(desired.Annotations, corev1.LastAppliedConfigAnnotation)
-	return mergeMap(target.Annotations, desired.Annotations)
+	delete(desired, corev1.LastAppliedConfigAnnotation)
+	return mergeMap(target, desired)
 }
 
 // mergeMap merges a map into another map.
@@ -148,9 +148,8 @@ func setDefaultService(ins EdgeInterface) {
 	}
 	mergeMap(svc.Spec.Selector, ins.GetLabels())
 
-	instanceMeta := *ins.GetObjectMeta().(*metav1.ObjectMeta)
-	mergeAnnotations(&svc.ObjectMeta, instanceMeta)
-	mergeLabelsInMetadata(&svc.ObjectMeta, instanceMeta)
+	mergeLabels(svc.GetLabels(), ins.GetLabels())
+	mergeAnnotations(svc.GetAnnotations(), ins.GetAnnotations())
 
 	var sPorts []corev1.ServicePort
 	appendPort := func(cPorts []corev1.ContainerPort) {
@@ -201,7 +200,6 @@ func setDefaultVolume(ins EdgeInterface) {
 		return
 	}
 
-	instanceMeta := *ins.GetObjectMeta().(*metav1.ObjectMeta)
-	mergeAnnotations(&vol.ObjectMeta, instanceMeta)
-	mergeLabelsInMetadata(&vol.ObjectMeta, instanceMeta)
+	mergeLabels(vol.GetLabels(), ins.GetLabels())
+	mergeAnnotations(vol.GetAnnotations(), ins.GetAnnotations())
 }
