@@ -7,6 +7,7 @@ import (
 	"github.com/emqx/edge-operator/internal"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type addEkuiperDeployment struct{}
@@ -50,7 +51,26 @@ func (a addNeuronExDeploy) reconcile(ctx context.Context, r *EdgeController, ins
 func getDeployment(instance edgev1alpha1.EdgeInterface) appsv1.Deployment {
 	podTemp := getPodTemplate(instance)
 
-	deploy := internal.GetDeployment(instance, instance.GetComponentType(), &podTemp)
+	deploy := appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Deployment",
+			APIVersion: appsv1.SchemeGroupVersion.String(),
+		},
+		ObjectMeta: internal.GetObjectMetadata(instance),
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &[]int32{1}[0],
+			Strategy: appsv1.DeploymentStrategy{
+				Type: appsv1.RecreateDeploymentStrategyType,
+			},
+			Selector: &metav1.LabelSelector{
+				MatchLabels: podTemp.GetLabels(),
+			},
+			Template: podTemp,
+		},
+	}
+
+	deploy.Name = instance.GetComponentType().GetResName(instance)
+
 	return deploy
 }
 
