@@ -38,7 +38,7 @@ func addService(ctx context.Context, r *EdgeController, ins edgev1alpha1.EdgeInt
 		return nil
 	}
 
-	svc := internal.GetService(ins, ins.GetServiceTemplate(), ins.GetComponentType())
+	svc := internal.GetService(ins, ins.GetServiceTemplate())
 	if err := r.createOrUpdate(ctx, ins, &svc, logger); err != nil {
 		return &requeue{curError: err}
 	}

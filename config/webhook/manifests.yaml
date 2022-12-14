@@ -11,6 +11,46 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-edge-emqx-io-v1alpha1-ekuiper
+  failurePolicy: Fail
+  name: mutate.ekuiper.edge.emqx.io
+  rules:
+  - apiGroups:
+    - edge.emqx.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - ekuipers
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-edge-emqx-io-v1alpha1-neuron
+  failurePolicy: Fail
+  name: mutate.neuron.edge.emqx.io
+  rules:
+  - apiGroups:
+    - edge.emqx.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - neurons
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-edge-emqx-io-v1alpha1-neuronex
   failurePolicy: Fail
   name: mutate.neuronex.edge.emqx.io
@@ -32,6 +72,46 @@ metadata:
   creationTimestamp: null
   name: validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-edge-emqx-io-v1alpha1-ekuiper
+  failurePolicy: Fail
+  name: vekuiper.kb.io
+  rules:
+  - apiGroups:
+    - edge.emqx.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - ekuipers
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-edge-emqx-io-v1alpha1-neuron
+  failurePolicy: Fail
+  name: vneuron.kb.io
+  rules:
+  - apiGroups:
+    - edge.emqx.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - neurons
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   clientConfig:

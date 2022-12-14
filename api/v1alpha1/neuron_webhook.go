@@ -24,61 +24,61 @@ import (
 )
 
 // log is for logging in this package.
-var neuronexlog = logf.Log.WithName("NeuronEX Webhook")
+var neuronlog = logf.Log.WithName("neuron-resource")
 
-func (r *NeuronEX) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (r *Neuron) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/mutate-edge-emqx-io-v1alpha1-neuronex,mutating=true,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neuronices,verbs=create;update,versions=v1alpha1,name=mutate.neuronex.edge.emqx.io,admissionReviewVersions=v1
+// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-var _ webhook.Defaulter = &NeuronEX{}
+//+kubebuilder:webhook:path=/mutate-edge-emqx-io-v1alpha1-neuron,mutating=true,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neurons,verbs=create;update,versions=v1alpha1,name=mutate.neuron.edge.emqx.io,admissionReviewVersions=v1
+
+var _ webhook.Defaulter = &Neuron{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *NeuronEX) Default() {
-	neuronexlog.Info("Set default value", "name", r.Name)
+func (r *Neuron) Default() {
+	neuronlog.Info("Set default value", "name", r.Name)
 
-	defValue := NeuronEX{
-		ObjectMeta: getCRObjectMeta(r.Name, ComponentTypeNeuronEx),
-		Spec: NeuronEXSpec{
-			Neuron:  defNeuron,
-			EKuiper: defEKuiper,
+	defValue := Neuron{
+		ObjectMeta: getCRObjectMeta(r.Name, ComponentTypeNeuron),
+		Spec: NeuronSpec{
+			Neuron: defNeuron,
 		},
 	}
 
 	mergeLabelsInMetadata(&r.ObjectMeta, defValue.ObjectMeta)
 	mergeAnnotations(&r.ObjectMeta, defValue.ObjectMeta)
-	extendEnv(&r.Spec.EKuiper, defValue.Spec.EKuiper.Env)
-	setDefaultEKuiperPort(&r.Spec.EKuiper, defValue.Spec.EKuiper.Env)
+	extendEnv(&r.Spec.Neuron, defValue.Spec.Neuron.Env)
 	setDefaultService(r)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-edge-emqx-io-v1alpha1-neuronex,mutating=false,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neuronices,verbs=create;update,versions=v1alpha1,name=validate.neuronex.edge.emqx.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-edge-emqx-io-v1alpha1-neuron,mutating=false,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neurons,verbs=create;update,versions=v1alpha1,name=vneuron.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &NeuronEX{}
+var _ webhook.Validator = &Neuron{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *NeuronEX) ValidateCreate() error {
-	neuronexlog.Info("validate create", "name", r.Name)
+func (r *Neuron) ValidateCreate() error {
+	neuronlog.Info("validate create", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object creation.
 	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *NeuronEX) ValidateUpdate(old runtime.Object) error {
-	neuronexlog.Info("validate update", "name", r.Name)
+func (r *Neuron) ValidateUpdate(old runtime.Object) error {
+	neuronlog.Info("validate update", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object update.
 	return nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *NeuronEX) ValidateDelete() error {
-	neuronexlog.Info("validate delete", "name", r.Name)
+func (r *Neuron) ValidateDelete() error {
+	neuronlog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil

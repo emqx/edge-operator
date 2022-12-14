@@ -13,3 +13,6 @@ spec:
     name: "ekuiper"
     image: lfedge/ekuiper:latest
     imagePullPolicy: IfNotPresent
+  serviceTemplate:
+    metadata:
+      name: ekuiper-service

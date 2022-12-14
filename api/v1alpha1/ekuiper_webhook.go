@@ -24,26 +24,27 @@ import (
 )
 
 // log is for logging in this package.
-var neuronexlog = logf.Log.WithName("NeuronEX Webhook")
+var ekuiperlog = logf.Log.WithName("EKuiper Webhook")
 
-func (r *NeuronEX) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (r *EKuiper) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/mutate-edge-emqx-io-v1alpha1-neuronex,mutating=true,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neuronices,verbs=create;update,versions=v1alpha1,name=mutate.neuronex.edge.emqx.io,admissionReviewVersions=v1
+// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-var _ webhook.Defaulter = &NeuronEX{}
+//+kubebuilder:webhook:path=/mutate-edge-emqx-io-v1alpha1-ekuiper,mutating=true,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=ekuipers,verbs=create;update,versions=v1alpha1,name=mutate.ekuiper.edge.emqx.io,admissionReviewVersions=v1
+
+var _ webhook.Defaulter = &EKuiper{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *NeuronEX) Default() {
-	neuronexlog.Info("Set default value", "name", r.Name)
+func (r *EKuiper) Default() {
+	ekuiperlog.Info("Set default value", "name", r.Name)
 
-	defValue := NeuronEX{
-		ObjectMeta: getCRObjectMeta(r.Name, ComponentTypeNeuronEx),
-		Spec: NeuronEXSpec{
-			Neuron:  defNeuron,
+	defValue := EKuiper{
+		ObjectMeta: getCRObjectMeta(r.Name, ComponentTypeEKuiper),
+		Spec: EKuiperSpec{
 			EKuiper: defEKuiper,
 		},
 	}
@@ -56,29 +57,29 @@ func (r *NeuronEX) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-edge-emqx-io-v1alpha1-neuronex,mutating=false,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neuronices,verbs=create;update,versions=v1alpha1,name=validate.neuronex.edge.emqx.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-edge-emqx-io-v1alpha1-ekuiper,mutating=false,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=ekuipers,verbs=create;update,versions=v1alpha1,name=vekuiper.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &NeuronEX{}
+var _ webhook.Validator = &EKuiper{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *NeuronEX) ValidateCreate() error {
-	neuronexlog.Info("validate create", "name", r.Name)
+func (r *EKuiper) ValidateCreate() error {
+	ekuiperlog.Info("validate create", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object creation.
 	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *NeuronEX) ValidateUpdate(old runtime.Object) error {
-	neuronexlog.Info("validate update", "name", r.Name)
+func (r *EKuiper) ValidateUpdate(old runtime.Object) error {
+	ekuiperlog.Info("validate update", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object update.
 	return nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *NeuronEX) ValidateDelete() error {
-	neuronexlog.Info("validate delete", "name", r.Name)
+func (r *EKuiper) ValidateDelete() error {
+	ekuiperlog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil

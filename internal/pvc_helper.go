@@ -57,5 +57,5 @@ func getPvcMetadata(ins edgev1alpha1.EdgeInterface) metav1.ObjectMeta {
 	if ins.GetVolumeClaimTemplate() != nil {
 		customMetadata = &ins.GetVolumeClaimTemplate().ObjectMeta
 	}
-	return GetObjectMetadata(ins, customMetadata, ins.GetComponentType())
+	return GetObjectMetadata(ins, customMetadata)
 }
