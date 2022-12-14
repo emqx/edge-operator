@@ -59,10 +59,9 @@ func GetConfigMap(ins client.Object, configName string, compType edgev1alpha1.Co
 			Kind:       "ConfigMap",
 			APIVersion: corev1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: GetObjectMetadata(ins),
+		ObjectMeta: GetObjectMetadata(ins, GetResNameOnPanic(ins, cmi.MapNameSuffix)),
 		Data:       cmi.Data,
 	}
-	cm.Name = GetResNameOnPanic(ins, cmi.MapNameSuffix)
 
 	return cm
 }
