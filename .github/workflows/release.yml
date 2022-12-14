@@ -34,17 +34,9 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         context: .
-    - name: install kubebuilder
-      run: |
-        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-        ARCH=$(uname -m | sed 's/x86_64/amd64/')
-        curl -fsL "https://storage.googleapis.com/kubebuilder-tools/kubebuilder-tools-1.16.4-${OS}-${ARCH}.tar.gz" -o kubebuilder-tools
-        tar -zxvf kubebuilder-tools
-        sudo mv kubebuilder/ /usr/local/kubebuilder
     - id: generate_yaml
       run: |
-        make kustomize
-        cd config/manager && ./bin/kustomize edit set image controller="${{ github.repository_owner }}/edge-operator-controller:${{ github.ref_name }}"
+        pushd config/manager && ./bin/kustomize edit set image controller="${{ github.repository_owner }}/edge-operator-controller:${{ github.ref_name }}" && popd
         ./bin/kustomize build config/default > edge-operator.yaml
         echo "file=edge-operator.yaml" >> $GITHUB_OUTPUT
     - id: prerelease

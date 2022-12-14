@@ -25,7 +25,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: minikube start
       - uses: actions/setup-go@v3
         with:
           go-version: '1.19.3'
@@ -47,3 +46,69 @@ jobs:
           sudo mv kubebuilder/ /usr/local/kubebuilder
       - name: Run unit tests
         run: make test
+
+  deployment:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        file:
+          - "config/samples/edge_v1alpha1_ekuiper.yaml"
+          - "config/samples/edge_v1alpha1_neuron.yaml"
+          - "config/samples/edge_v1alpha1_neuronex.yaml"
+
+    steps:
+      - run: minikube start
+      - name: install cert-manager
+        run: |
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm install \
+            cert-manager jetstack/cert-manager \
+            --namespace cert-manager \
+            --create-namespace \
+            --set installCRDs=true
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.19.3'
+      - uses: actions/checkout@v3
+      - name: Build image
+        env:
+          IMG: "emqx/edge-operator-controller:${{ github.sha }}"
+        run: eval $(minikube docker-env) && docker build -t $IMG .
+      - name: Deploy controller
+        env:
+          IMG: "emqx/edge-operator-controller:${{ github.sha }}"
+        run: |
+          make install
+          make deploy
+      - run: kubectl wait --for=condition=Ready pods -l "control-plane=controller-manager" -n edge-operator-system --timeout=60s
+      - name: Get metadata
+        id: meta
+        run: |
+          name=$(yq '.metadata.name' ${{ matrix.file }})
+          echo "name=${name}" >> $GITHUB_OUTPUT
+          namespace=$(yq '.metadata.namespace' ${{ matrix.file }})
+          echo "namespace=${namespace}" >> $GITHUB_OUTPUT
+          kind=$(yq '.kind' ${{ matrix.file }})
+          echo "kind=${kind}" >> $GITHUB_OUTPUT
+      - run: kubectl apply -f ${{ matrix.file }}
+      - name: Check status
+        run: |
+          sleep 5
+          kubectl wait --for=condition=Ready pods -l "app.kubernetes.io/name=${{ steps.meta.outputs.name }}" -n ${{ steps.meta.outputs.namespace }} --timeout=120s
+      # - name: Check CR status
+      #   timeout-minutes: 1
+      #   run: |
+      #     while
+      #       phase="$(kubectl get ${{ steps.meta.outputs.kind }} ${{ steps.meta.outputs.name }} -o jsonpath='{.status.phase}')"
+      #       [[ ${phase} != "Running" ]]
+      #     do
+      #       kubectl get pods,deployment,service -l "app.kubernetes.io/instance=${{ steps.meta.outputs.name }}"
+      #       sleep 1
+      #     done
+      - if: failure()
+        run: kubectl describe pods -l "control-plane=controller-manager" -n edge-operator-system
+      - if: failure()
+        run: kubectl logs -l "control-plane=controller-manager" -n edge-operator-system -c manager --tail=100
