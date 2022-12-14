@@ -1,10 +1,16 @@
 package v1alpha1
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+type ComponentType string
+
+const (
+	ComponentTypeNeuronEx ComponentType = "neuronex"
+	ComponentTypeNeuron   ComponentType = "neuron"
+	ComponentTypeEKuiper  ComponentType = "ekuiper"
 )
 
 // +kubebuilder:object:generate=false
@@ -12,6 +18,7 @@ type EdgeInterface interface {
 	client.Object
 
 	GetComponentType() ComponentType
+	GetResName() string
 
 	GetEdgePodSpec() EdgePodSpec
 	SetEdgePodSpec(EdgePodSpec)
@@ -310,20 +317,4 @@ type EdgeStatus struct {
 	// More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-phase
 	// +optional
 	Phase corev1.PodPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase,casttype=PodPhase"`
-}
-
-type ComponentType string
-
-const (
-	ComponentTypeNeuronEx ComponentType = "neuronex"
-	ComponentTypeNeuron   ComponentType = "neuron"
-	ComponentTypeEKuiper  ComponentType = "ekuiper"
-)
-
-func (ct ComponentType) GetResName(ins client.Object) string {
-	return fmt.Sprintf("%s-%s", ins.GetName(), ct)
-}
-
-func (ct ComponentType) String() string {
-	return string(ct)
 }

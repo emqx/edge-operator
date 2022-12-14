@@ -52,7 +52,7 @@ func getDeployment(instance edgev1alpha1.EdgeInterface) appsv1.Deployment {
 	podTemp := getPodTemplate(instance)
 
 	deploy := appsv1.Deployment{
-		ObjectMeta: internal.GetObjectMetadata(instance, instance.GetComponentType().GetResName(instance)),
+		ObjectMeta: internal.GetObjectMetadata(instance, instance.GetResName()),
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &[]int32{1}[0],
 			Strategy: appsv1.DeploymentStrategy{
