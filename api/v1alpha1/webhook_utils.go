@@ -54,7 +54,7 @@ func getCRObjectMeta(insName string, compType ComponentType) metav1.ObjectMeta {
 		Labels: map[string]string{
 			ManagerByKey: "edge-operator",
 			InstanceKey:  insName,
-			ComponentKey: compType.String(),
+			ComponentKey: string(compType),
 		},
 	}
 }
@@ -140,7 +140,7 @@ func setDefaultService(ins EdgeInterface) {
 	}
 
 	if svc.Name == "" {
-		svc.Name = ins.GetComponentType().GetResName(ins)
+		svc.Name = ins.GetResName()
 	}
 
 	if len(svc.Spec.Selector) == 0 {
