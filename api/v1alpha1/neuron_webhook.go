@@ -57,7 +57,7 @@ func (r *Neuron) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-edge-emqx-io-v1alpha1-neuron,mutating=false,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neurons,verbs=create;update,versions=v1alpha1,name=vneuron.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-edge-emqx-io-v1alpha1-neuron,mutating=false,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neurons,verbs=create;update,versions=v1alpha1,name=validate.neuron.edge.emqx.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &Neuron{}
 
