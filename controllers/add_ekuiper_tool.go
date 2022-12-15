@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+
 	"github.com/emqx/edge-operator/internal"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -16,7 +17,7 @@ func (a addEkuiperTool) reconcile(ctx context.Context, r *EdgeController, instan
 	logger := log.WithValues("namespace", instance.Namespace, "instance", instance.Name, "reconciler",
 		"add eKuiper tool")
 
-	newConfigMap := internal.GetConfigMap(instance, internal.EKuiperToolConfig, instance.GetComponentType())
+	newConfigMap := internal.GetConfigMap(instance, internal.EKuiperToolConfig)
 
 	existingConfigMap := &corev1.ConfigMap{}
 	if err := r.Get(ctx, client.ObjectKeyFromObject(&newConfigMap), existingConfigMap); err != nil {
