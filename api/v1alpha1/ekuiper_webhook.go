@@ -51,8 +51,8 @@ func (r *EKuiper) Default() {
 
 	mergeLabels(r, &defValue)
 	mergeAnnotations(r, &defValue)
-	extendEnv(&r.Spec.EKuiper, defValue.Spec.EKuiper.Env)
-	mergeContainerPorts(r.GetEKuiper(), defValue.GetEKuiper())
+	mergeEnv(r.GetEKuiper(), defValue.GetEKuiper())
+	setContainerPortsFromEnv(r.GetEKuiper())
 	setDefaultService(r)
 	setDefaultVolume(r)
 }

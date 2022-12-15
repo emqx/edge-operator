@@ -50,9 +50,12 @@ func (r *NeuronEX) Default() {
 
 	mergeLabels(r, &defValue)
 	mergeAnnotations(r, &defValue)
-	extendEnv(&r.Spec.EKuiper, defValue.Spec.EKuiper.Env)
-	mergeContainerPorts(r.GetEKuiper(), defValue.GetEKuiper())
+
 	mergeContainerPorts(r.GetNeuron(), defValue.GetNeuron())
+
+	mergeEnv(r.GetEKuiper(), defValue.GetEKuiper())
+	setContainerPortsFromEnv(r.GetEKuiper())
+
 	setDefaultService(r)
 	setDefaultVolume(r)
 }
