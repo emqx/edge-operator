@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -23,18 +25,6 @@ var defEKuiper = corev1.Container{
 			Value: "9081",
 		},
 	},
-	Ports: []corev1.ContainerPort{
-		{
-			Name:          "port",
-			Protocol:      corev1.ProtocolTCP,
-			ContainerPort: int32(20498),
-		},
-		{
-			Name:          "rest-port",
-			Protocol:      corev1.ProtocolTCP,
-			ContainerPort: int32(9081),
-		},
-	},
 }
 
 var defNeuron = corev1.Container{
@@ -44,7 +34,7 @@ var defNeuron = corev1.Container{
 			Name:     "web",
 			Protocol: corev1.ProtocolTCP,
 			// neuron web port is hardcode in source code
-			ContainerPort: int32(7000),
+			ContainerPort: 7000,
 		},
 	},
 }
@@ -59,18 +49,18 @@ func getCRObjectMeta(insName string, compType ComponentType) metav1.ObjectMeta {
 	}
 }
 
-// extendEnv adds environment variables to an existing environment, unless
+// mergeEnv adds environment variables to an existing environment, unless
 // environment variables with the same name are already present.
-func extendEnv(container *corev1.Container, env []corev1.EnvVar) {
-	existingVars := make(map[string]bool, len(container.Env))
+func mergeEnv(target, desired *corev1.Container) {
+	existingVars := make(map[string]struct{}, len(target.Env))
 
-	for _, envVar := range container.Env {
-		existingVars[envVar.Name] = true
+	for _, envVar := range target.Env {
+		existingVars[envVar.Name] = struct{}{}
 	}
 
-	for _, envVar := range env {
-		if !existingVars[envVar.Name] {
-			container.Env = append(container.Env, envVar)
+	for _, envVar := range desired.Env {
+		if _, ok := existingVars[envVar.Name]; !ok {
+			target.Env = append(target.Env, envVar)
 		}
 	}
 }
@@ -107,16 +97,27 @@ func mergeMap(target map[string]string, desired map[string]string) map[string]st
 	return target
 }
 
+func setContainerPortsFromEnv(container *corev1.Container) {
+	envs := container.Env
+	for i := range envs {
+		if envs[i].Name == eKuiperBasePort || envs[i].Name == eKuiperBaseRestPort {
+			s := strings.SplitAfter(envs[i].Name, "KUIPER__")[1]
+			name := strings.ToLower(strings.ReplaceAll(s, "__", "-"))
+			container.Ports = append(container.Ports, corev1.ContainerPort{
+				Name:          name,
+				ContainerPort: intstr.Parse(envs[i].Value).IntVal,
+				Protocol:      corev1.ProtocolTCP,
+			})
+		}
+	}
+}
+
 // mergeContainerPorts merge the same name and containerPort's port
 func mergeContainerPorts(target, desired *corev1.Container) {
 	for _, dPort := range desired.Ports {
 		found := false
 		for _, tPort := range target.Ports {
-			if tPort.Name == dPort.Name {
-				found = true
-				break
-			}
-			if tPort.ContainerPort == dPort.ContainerPort {
+			if tPort.Name == dPort.Name || tPort.ContainerPort == dPort.ContainerPort {
 				found = true
 				break
 			}
