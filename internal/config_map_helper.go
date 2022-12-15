@@ -1,7 +1,6 @@
 package internal
 
 import (
-	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	jsoniter "github.com/json-iterator/go"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,7 +47,7 @@ func getEKuiperToolConfig() string {
 	return res
 }
 
-func GetConfigMap(ins client.Object, configName string, compType edgev1alpha1.ComponentType) corev1.ConfigMap {
+func GetConfigMap(ins client.Object, configName string) corev1.ConfigMap {
 	cmi, has := ConfigMaps[configName]
 	if !has {
 		panic("no such config map name " + configName)

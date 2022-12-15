@@ -42,7 +42,8 @@ func GetVolume(ins edgev1alpha1.EdgeInterface, m *ConfigMapInfo) corev1.Volume {
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: GetResNameOnPanic(ins, m.MapNameSuffix)},
+					Name: GetResNameOnPanic(ins, m.MapNameSuffix),
+				},
 			},
 		},
 	}
