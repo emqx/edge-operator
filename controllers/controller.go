@@ -163,11 +163,11 @@ func (ec *EdgeController) createOrUpdate(ctx context.Context, owner, newObj clie
 }
 
 func (ec *EdgeController) create(ctx context.Context, owner, newObj client.Object) error {
-	if err := ctrl.SetControllerReference(owner, newObj, ec.Scheme()); err != nil {
-		return emperror.Wrapf(err, "failed to set controller reference for %s %s", newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
-	}
 	if err := ec.patcher.SetLastAppliedAnnotation(newObj); err != nil {
 		return emperror.Wrapf(err, "failed to set last applied annotation for %s %s", newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
+	}
+	if err := ctrl.SetControllerReference(owner, newObj, ec.Scheme()); err != nil {
+		return emperror.Wrapf(err, "failed to set controller reference for %s %s", newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
 	}
 	if err := ec.Create(ctx, newObj); err != nil {
 		return emperror.Wrapf(err, "failed to create %s %s", newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
@@ -176,6 +176,16 @@ func (ec *EdgeController) create(ctx context.Context, owner, newObj client.Objec
 }
 
 func (ec *EdgeController) update(ctx context.Context, owner, newObj, existingObj client.Object) error {
+	if err := ec.patcher.SetLastAppliedAnnotation(newObj); err != nil {
+		return emperror.Wrapf(err, "failed to set last applied annotation for %s %s",
+			newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
+	}
+
+	if err := ctrl.SetControllerReference(owner, newObj, ec.Scheme()); err != nil {
+		return emperror.Wrapf(err, "failed to set controller reference for %s %s",
+			newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
+	}
+
 	annotations := existingObj.GetAnnotations()
 	if annotations == nil {
 		annotations = make(map[string]string)
@@ -188,16 +198,6 @@ func (ec *EdgeController) update(ctx context.Context, owner, newObj, existingObj
 	newObj.SetResourceVersion(existingObj.GetResourceVersion())
 	newObj.SetCreationTimestamp(existingObj.GetCreationTimestamp())
 	newObj.SetManagedFields(existingObj.GetManagedFields())
-
-	if err := ctrl.SetControllerReference(owner, newObj, ec.Scheme()); err != nil {
-		return emperror.Wrapf(err, "failed to set controller reference for %s %s",
-			newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
-	}
-
-	if err := ec.patcher.SetLastAppliedAnnotation(newObj); err != nil {
-		return emperror.Wrapf(err, "failed to set last applied annotation for %s %s",
-			newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
-	}
 
 	if err := ec.Update(ctx, newObj); err != nil {
 		return emperror.Wrapf(err, "failed to update %s %s",
