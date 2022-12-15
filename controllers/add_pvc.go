@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"github.com/emqx/edge-operator/internal"
 	"github.com/go-logr/logr"
@@ -10,17 +11,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type pvcInfo struct {
-	name      string
-	mountPath string
+type volumeInfo struct {
+	name        string
+	mountPath   string
+	useEmptyDir bool
 }
 
-var defaultPVC = map[edgev1alpha1.ComponentType][]pvcInfo{
+var defaultVolume = map[edgev1alpha1.ComponentType][]volumeInfo{
 	edgev1alpha1.ComponentTypeNeuronEx: {
 		{name: "neuron-data", mountPath: "/opt/neuron/persistence"},
 		{name: "ekuiper-data", mountPath: "/kuiper/data"},
 		{name: "ekuiper-plugin", mountPath: "/kuiper/plugins/portable"},
-		{name: "shared-tmp", mountPath: "/tmp"},
+		{name: "shared-tmp", mountPath: "/tmp", useEmptyDir: true},
 	},
 	edgev1alpha1.ComponentTypeEKuiper: {
 		{name: "ekuiper-data", mountPath: "/kuiper/data"},
@@ -70,9 +72,12 @@ func (a addNeuronExPVC) reconcile(ctx context.Context, r *EdgeController, instan
 func addPVC(ctx context.Context, r *EdgeController, ins edgev1alpha1.EdgeInterface, compType edgev1alpha1.ComponentType,
 	logger logr.Logger) *requeue {
 
-	pvcs := defaultPVC[compType]
-	for i := range pvcs {
-		pvc := internal.GetPVC(ins, pvcs[i].name)
+	vols := defaultVolume[compType]
+	for i := range vols {
+		if vols[i].useEmptyDir {
+			continue
+		}
+		pvc := internal.GetPVC(ins, vols[i].name)
 		existingPVC := &corev1.PersistentVolumeClaim{}
 		err := r.Get(ctx, client.ObjectKeyFromObject(&pvc), existingPVC)
 		if err != nil {
