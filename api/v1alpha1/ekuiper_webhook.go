@@ -52,7 +52,7 @@ func (r *EKuiper) Default() {
 	mergeLabelsInMetadata(&r.ObjectMeta, defValue.ObjectMeta)
 	mergeAnnotations(&r.ObjectMeta, defValue.ObjectMeta)
 	extendEnv(&r.Spec.EKuiper, defValue.Spec.EKuiper.Env)
-	setDefaultEKuiperPort(&r.Spec.EKuiper, defValue.Spec.EKuiper.Env)
+	mergeContainerPorts(r.GetEKuiper(), defValue.GetEKuiper())
 	setDefaultService(r)
 	setDefaultVolume(r)
 }

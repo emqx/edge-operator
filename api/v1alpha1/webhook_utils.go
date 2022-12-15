@@ -23,10 +23,30 @@ var defEKuiper = corev1.Container{
 			Value: "9081",
 		},
 	},
+	Ports: []corev1.ContainerPort{
+		{
+			Name:          "port",
+			Protocol:      corev1.ProtocolTCP,
+			ContainerPort: int32(20498),
+		},
+		{
+			Name:          "rest-port",
+			Protocol:      corev1.ProtocolTCP,
+			ContainerPort: int32(9081),
+		},
+	},
 }
 
 var defNeuron = corev1.Container{
 	Name: "neuron",
+	Ports: []corev1.ContainerPort{
+		{
+			Name:     "web",
+			Protocol: corev1.ProtocolTCP,
+			// neuron web port is hardcode in source code
+			ContainerPort: int32(7000),
+		},
+	},
 }
 
 func getCRObjectMeta(insName string, compType ComponentType) metav1.ObjectMeta {
@@ -92,43 +112,25 @@ func mergeMap(target map[string]string, desired map[string]string) bool {
 	return changed
 }
 
-// mergePorts merge the same name of env to user defined port
-func mergePorts(container *corev1.Container, envPorts map[string]string) {
-	ports := container.Ports
-	for name, port := range envPorts {
+// mergeContainerPorts merge the same name and containerPort's port
+func mergeContainerPorts(target, desired *corev1.Container) {
+	for _, dPort := range desired.Ports {
 		found := false
-		for i := range ports {
-			if ports[i].Name == name {
+		for _, tPort := range target.Ports {
+			if tPort.Name == dPort.Name {
+				found = true
+				break
+			}
+			if tPort.ContainerPort == dPort.ContainerPort {
 				found = true
 				break
 			}
 		}
 
 		if !found {
-			ports = append(ports, corev1.ContainerPort{
-				Name:          name,
-				ContainerPort: intstr.Parse(port).IntVal,
-				Protocol:      corev1.ProtocolTCP,
-			})
+			target.Ports = append(target.Ports, dPort)
 		}
 	}
-	container.Ports = ports
-}
-
-func setDefaultEKuiperPort(target *corev1.Container, env []corev1.EnvVar) {
-	extendEnv(target, env)
-
-	envPorts := make(map[string]string)
-	for i := range target.Env {
-		value := target.Env[i].Value
-		switch target.Env[i].Name {
-		case eKuiperBasePort:
-			envPorts["port"] = value
-		case eKuiperBaseRestPort:
-			envPorts["rest-port"] = value
-		}
-	}
-	mergePorts(target, envPorts)
 }
 
 func setDefaultService(ins EdgeInterface) {
