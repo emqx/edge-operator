@@ -79,37 +79,32 @@ func extendEnv(container *corev1.Container, env []corev1.EnvVar) {
 // on object's metadata.
 //
 // This will return whether the target's labels have changed.
-func mergeLabels(target, desired map[string]string) bool {
-	if target == nil {
-		target = make(map[string]string)
-	}
-	return mergeMap(target, desired)
+func mergeLabels(target, desired metav1.Object) {
+	target.SetLabels(mergeMap(target.GetLabels(), desired.GetLabels()))
 }
 
 // mergeAnnotations merges the annotations specified by the operator into
 // on object's metadata.
 //
 // This will return whether the target's annotations have changed.
-func mergeAnnotations(target, desired map[string]string) bool {
-	if target == nil {
-		target = make(map[string]string)
+func mergeAnnotations(target, desired metav1.Object) {
+	desiredAnnotations := desired.GetAnnotations()
+	if desiredAnnotations != nil {
+		delete(desiredAnnotations, corev1.LastAppliedConfigAnnotation)
 	}
-	delete(desired, corev1.LastAppliedConfigAnnotation)
-	return mergeMap(target, desired)
+	target.SetAnnotations(mergeMap(target.GetAnnotations(), desiredAnnotations))
 }
 
 // mergeMap merges a map into another map.
 //
 // This will return whether the target's values have changed.
-func mergeMap(target map[string]string, desired map[string]string) bool {
-	changed := false
+func mergeMap(target map[string]string, desired map[string]string) map[string]string {
 	for key, value := range desired {
 		if target[key] != value {
 			target[key] = value
-			changed = true
 		}
 	}
-	return changed
+	return target
 }
 
 // mergeContainerPorts merge the same name and containerPort's port
@@ -142,14 +137,10 @@ func setDefaultService(ins EdgeInterface) {
 	if svc.Name == "" {
 		svc.Name = ins.GetResName()
 	}
+	mergeLabels(svc, ins)
+	mergeAnnotations(svc, ins)
 
-	if len(svc.Spec.Selector) == 0 {
-		svc.Spec.Selector = make(map[string]string)
-	}
-	mergeMap(svc.Spec.Selector, ins.GetLabels())
-
-	mergeLabels(svc.GetLabels(), ins.GetLabels())
-	mergeAnnotations(svc.GetAnnotations(), ins.GetAnnotations())
+	svc.Spec.Selector = mergeMap(svc.Spec.Selector, ins.GetLabels())
 
 	var sPorts []corev1.ServicePort
 	appendPort := func(cPorts []corev1.ContainerPort) {
@@ -200,6 +191,6 @@ func setDefaultVolume(ins EdgeInterface) {
 		return
 	}
 
-	mergeLabels(vol.GetLabels(), ins.GetLabels())
-	mergeAnnotations(vol.GetAnnotations(), ins.GetAnnotations())
+	mergeLabels(vol, ins)
+	mergeAnnotations(vol, ins)
 }
