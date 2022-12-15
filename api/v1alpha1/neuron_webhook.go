@@ -49,8 +49,8 @@ func (r *Neuron) Default() {
 		},
 	}
 
-	mergeLabels(r.GetLabels(), defValue.GetLabels())
-	mergeAnnotations(r.GetAnnotations(), defValue.GetAnnotations())
+	mergeLabels(r, &defValue)
+	mergeAnnotations(r, &defValue)
 	extendEnv(&r.Spec.Neuron, defValue.Spec.Neuron.Env)
 	mergeContainerPorts(r.GetNeuron(), defValue.GetNeuron())
 	setDefaultService(r)

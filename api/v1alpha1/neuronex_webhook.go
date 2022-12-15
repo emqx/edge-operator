@@ -48,8 +48,8 @@ func (r *NeuronEX) Default() {
 		},
 	}
 
-	mergeLabels(r.GetLabels(), defValue.GetLabels())
-	mergeAnnotations(r.GetAnnotations(), defValue.GetAnnotations())
+	mergeLabels(r, &defValue)
+	mergeAnnotations(r, &defValue)
 	extendEnv(&r.Spec.EKuiper, defValue.Spec.EKuiper.Env)
 	mergeContainerPorts(r.GetEKuiper(), defValue.GetEKuiper())
 	mergeContainerPorts(r.GetNeuron(), defValue.GetNeuron())
