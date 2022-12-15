@@ -19,18 +19,23 @@ type volumeInfo struct {
 
 var defaultVolume = map[edgev1alpha1.ComponentType][]volumeInfo{
 	edgev1alpha1.ComponentTypeNeuronEx: {
-		{name: "neuron-data", mountPath: "/opt/neuron/persistence"},
-		{name: "ekuiper-data", mountPath: "/kuiper/data"},
-		{name: "ekuiper-plugin", mountPath: "/kuiper/plugins/portable"},
 		{name: "shared-tmp", mountPath: "/tmp", useEmptyDir: true},
 	},
 	edgev1alpha1.ComponentTypeEKuiper: {
 		{name: "ekuiper-data", mountPath: "/kuiper/data"},
-		{name: "ekuiper-plugin", mountPath: "/ekuiper-plugin"},
+		{name: "ekuiper-plugin", mountPath: "/kuiper/plugins/portable"},
 	},
 	edgev1alpha1.ComponentTypeNeuron: {
 		{name: "neuron-data", mountPath: "/opt/neuron/persistence"},
 	},
+}
+
+func mergeVolumes(vols *[]volumeInfo) {
+	// merge the volumes of ekuiper and neuron when type is NeuronEx
+	ts := []edgev1alpha1.ComponentType{edgev1alpha1.ComponentTypeNeuron, edgev1alpha1.ComponentTypeEKuiper}
+	for _, t := range ts {
+		*vols = append(*vols, defaultVolume[t]...)
+	}
 }
 
 type addEKuiperPVC struct{}
@@ -73,6 +78,9 @@ func addPVC(ctx context.Context, r *EdgeController, ins edgev1alpha1.EdgeInterfa
 	logger logr.Logger) *requeue {
 
 	vols := defaultVolume[compType]
+	if compType == edgev1alpha1.ComponentTypeNeuronEx {
+		mergeVolumes(&vols)
+	}
 	for i := range vols {
 		if vols[i].useEmptyDir {
 			continue

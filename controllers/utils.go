@@ -1,10 +1,11 @@
 package controllers
 
 import (
+	"reflect"
+
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"reflect"
 )
 
 // structAssign copy the value of struct from src to dist

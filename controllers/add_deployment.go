@@ -111,6 +111,9 @@ func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
 
 	compType := ins.GetComponentType()
 	vols := defaultVolume[compType]
+	if compType == edgev1alpha1.ComponentTypeNeuronEx {
+		mergeVolumes(&vols)
+	}
 	for _, vol := range vols {
 		volume := corev1.Volume{
 			Name: vol.name,
@@ -137,10 +140,9 @@ func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
 func getNeuronContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
 	container := ins.GetNeuron().DeepCopy()
 	var vols []volumeInfo
+	vols = defaultVolume[edgev1alpha1.ComponentTypeNeuron]
 	if ins.GetComponentType() == edgev1alpha1.ComponentTypeNeuronEx {
-		vols = defaultVolume[edgev1alpha1.ComponentTypeNeuronEx]
-	} else {
-		vols = defaultVolume[edgev1alpha1.ComponentTypeNeuron]
+		vols = append(vols, defaultVolume[edgev1alpha1.ComponentTypeNeuronEx]...)
 	}
 	for i := range vols {
 		container.VolumeMounts = append(container.VolumeMounts,
@@ -154,7 +156,11 @@ func getNeuronContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
 
 func getEkuiperContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
 	container := ins.GetEKuiper().DeepCopy()
-	vols := defaultVolume[edgev1alpha1.ComponentTypeEKuiper]
+	var vols []volumeInfo
+	vols = defaultVolume[edgev1alpha1.ComponentTypeEKuiper]
+	if ins.GetComponentType() == edgev1alpha1.ComponentTypeNeuronEx {
+		vols = append(vols, defaultVolume[edgev1alpha1.ComponentTypeNeuronEx]...)
+	}
 	for i := range vols {
 		container.VolumeMounts = append(container.VolumeMounts,
 			corev1.VolumeMount{
