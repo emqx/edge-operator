@@ -2,6 +2,9 @@ package controllers
 
 import (
 	"context"
+	"path/filepath"
+	"regexp"
+	"strings"
 
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"github.com/emqx/edge-operator/internal"
@@ -166,12 +169,16 @@ func getEkuiperContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
 }
 
 func getEkuiperToolContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
-	cmi := internal.ConfigMaps[internal.EKuiperToolConfig]
+	compile := regexp.MustCompile(`[0-9]+(\.[0-9]+)?(\.[0-9]+)?(-(alpha|beta|rc)\.[0-9]+)?`)
 
-	// TODO: Is it the latest version of eKuiper tool compatible with the eKuiper that user specifies?
+	i := strings.Split(ins.GetEKuiper().Image, ":")
+	registry := filepath.Dir(i[0])
+	version := compile.FindString(i[1])
+
+	cmi := internal.ConfigMaps[internal.EKuiperToolConfig]
 	container := corev1.Container{
 		Name:            "ekuiper-tool",
-		Image:           "lfedge/ekuiper-kubernetes-tool:latest",
+		Image:           registry + "/ekuiper-kubernetes-tool:" + version,
 		ImagePullPolicy: ins.GetEKuiper().ImagePullPolicy,
 		VolumeMounts: []corev1.VolumeMount{
 			{
