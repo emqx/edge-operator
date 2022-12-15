@@ -30,14 +30,6 @@ var defaultVolume = map[edgev1alpha1.ComponentType][]volumeInfo{
 	},
 }
 
-func mergeVolumes(vols *[]volumeInfo) {
-	// merge the volumes of ekuiper and neuron when type is NeuronEx
-	ts := []edgev1alpha1.ComponentType{edgev1alpha1.ComponentTypeNeuron, edgev1alpha1.ComponentTypeEKuiper}
-	for _, t := range ts {
-		*vols = append(*vols, defaultVolume[t]...)
-	}
-}
-
 type addEKuiperPVC struct{}
 
 func (a addEKuiperPVC) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.EKuiper) *requeue {
@@ -78,6 +70,7 @@ func addPVC(ctx context.Context, r *EdgeController, ins edgev1alpha1.EdgeInterfa
 	logger logr.Logger) *requeue {
 
 	vols := defaultVolume[compType]
+	// merge the volumes of ekuiper and neuron when type is NeuronEx
 	if compType == edgev1alpha1.ComponentTypeNeuronEx {
 		mergeVolumes(&vols)
 	}

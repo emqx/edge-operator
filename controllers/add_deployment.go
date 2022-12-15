@@ -111,6 +111,7 @@ func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
 
 	compType := ins.GetComponentType()
 	vols := defaultVolume[compType]
+	// merge the volumes of ekuiper and neuron when type is NeuronEx
 	if compType == edgev1alpha1.ComponentTypeNeuronEx {
 		mergeVolumes(&vols)
 	}
