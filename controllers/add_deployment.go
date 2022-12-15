@@ -166,14 +166,13 @@ func getEkuiperContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
 }
 
 func getEkuiperToolContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
-	conf := ins.GetEKuiper()
 	cmi := internal.ConfigMaps[internal.EKuiperToolConfig]
 
 	// TODO: Is it the latest version of eKuiper tool compatible with the eKuiper that user specifies?
 	container := corev1.Container{
 		Name:            "ekuiper-tool",
 		Image:           "lfedge/ekuiper-kubernetes-tool:latest",
-		ImagePullPolicy: conf.ImagePullPolicy,
+		ImagePullPolicy: ins.GetEKuiper().ImagePullPolicy,
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      cmi.MountName,

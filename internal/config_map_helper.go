@@ -39,7 +39,7 @@ func getEKuiperToolConfig() string {
 			"description": "create neuronStream",
 			"method":      "post",
 			"data": map[string]string{
-				"sql": `create stream neuronStream() WITH (TYPE="neuron",FORMAT="json",SHARED="true");`,
+				"sql": "create stream neuronStream() WITH (TYPE=\"neuron\",FORMAT=\"json\",SHARED=\"true\");",
 			},
 		},
 	}
