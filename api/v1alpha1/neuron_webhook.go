@@ -52,6 +52,7 @@ func (r *Neuron) Default() {
 	mergeLabelsInMetadata(&r.ObjectMeta, defValue.ObjectMeta)
 	mergeAnnotations(&r.ObjectMeta, defValue.ObjectMeta)
 	extendEnv(&r.Spec.Neuron, defValue.Spec.Neuron.Env)
+	mergeContainerPorts(r.GetNeuron(), defValue.GetNeuron())
 	setDefaultService(r)
 	setDefaultVolume(r)
 }
