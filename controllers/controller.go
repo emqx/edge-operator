@@ -157,7 +157,7 @@ func (ec *EdgeController) createOrUpdate(ctx context.Context, owner, newObj clie
 	}
 	if !patcherResult.IsEmpty() {
 		logger.Info("Update", "res", newObj.GetName())
-		return ec.update(ctx, newObj, existingObj)
+		return ec.update(ctx, owner, newObj, existingObj)
 	}
 	return nil
 }
@@ -175,18 +175,33 @@ func (ec *EdgeController) create(ctx context.Context, owner, newObj client.Objec
 	return nil
 }
 
-func (ec *EdgeController) update(ctx context.Context, newObj, existingObj client.Object) error {
-	existingObj.SetLabels(newObj.GetLabels())
-	existingObj.SetAnnotations(newObj.GetAnnotations())
-
-	if err := ec.patcher.SetLastAppliedAnnotation(existingObj); err != nil {
-		return emperror.Wrapf(err, "failed to set last applied annotation for %s %s",
-			existingObj.GetObjectKind().GroupVersionKind().Kind, existingObj.GetName())
+func (ec *EdgeController) update(ctx context.Context, owner, newObj, existingObj client.Object) error {
+	annotations := existingObj.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	for key, value := range newObj.GetAnnotations() {
+		annotations[key] = value
 	}
 
-	if err := ec.Update(ctx, existingObj); err != nil {
+	newObj.SetAnnotations(annotations)
+	newObj.SetResourceVersion(existingObj.GetResourceVersion())
+	newObj.SetCreationTimestamp(existingObj.GetCreationTimestamp())
+	newObj.SetManagedFields(existingObj.GetManagedFields())
+
+	if err := ctrl.SetControllerReference(owner, newObj, ec.Scheme()); err != nil {
+		return emperror.Wrapf(err, "failed to set controller reference for %s %s",
+			newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
+	}
+
+	if err := ec.patcher.SetLastAppliedAnnotation(newObj); err != nil {
+		return emperror.Wrapf(err, "failed to set last applied annotation for %s %s",
+			newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
+	}
+
+	if err := ec.Update(ctx, newObj); err != nil {
 		return emperror.Wrapf(err, "failed to update %s %s",
-			existingObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
+			newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
 	}
 
 	return nil
