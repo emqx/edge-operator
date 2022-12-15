@@ -138,6 +138,12 @@ func setDefaultService(ins EdgeInterface) {
 	if svc.Name == "" {
 		svc.Name = ins.GetResName()
 	}
+
+	svc.Namespace = ins.GetNamespace()
+	if svc.Namespace == "" {
+		svc.Namespace = "default"
+	}
+
 	mergeLabels(svc, ins)
 	mergeAnnotations(svc, ins)
 
@@ -190,6 +196,10 @@ func setDefaultVolume(ins EdgeInterface) {
 	vol := ins.GetVolumeClaimTemplate()
 	if vol == nil {
 		return
+	}
+	vol.Namespace = ins.GetNamespace()
+	if vol.Namespace == "" {
+		vol.Namespace = "default"
 	}
 
 	mergeLabels(vol, ins)

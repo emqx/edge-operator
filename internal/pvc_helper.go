@@ -13,14 +13,6 @@ func GetPVC(ins edgev1alpha1.EdgeInterface, shortName string) (pvc corev1.Persis
 
 	pvc.ObjectMeta = GetObjectMetadata(ins.GetVolumeClaimTemplate(), GetPvcName(ins, shortName))
 
-	if pvc.Spec.AccessModes == nil {
-		pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
-	}
-
-	if pvc.Spec.Resources.Requests == nil {
-		pvc.Spec.Resources.Requests = corev1.ResourceList{}
-	}
-
 	storage := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
 	if (&storage).IsZero() {
 		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = resource.MustParse("128Gi")
