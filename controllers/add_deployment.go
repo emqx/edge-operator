@@ -60,8 +60,6 @@ func getPodTemplate(instance edgev1alpha1.EdgeInterface) corev1.PodTemplateSpec 
 		Spec:       getPodSpec(instance),
 	}
 
-	// TODO: return spec only after set default label by webhook
-	pod.Spec.Volumes = append(pod.Spec.Volumes, getVolumes(instance)...)
 	return pod
 }
 
@@ -69,6 +67,8 @@ func getPodSpec(instance edgev1alpha1.EdgeInterface) corev1.PodSpec {
 	podSpec := &corev1.PodSpec{}
 	edgePodSpec := instance.GetEdgePodSpec()
 	structAssign(podSpec, &edgePodSpec)
+
+	podSpec.Volumes = append(podSpec.Volumes, getVolumes(instance)...)
 
 	switch instance.GetComponentType() {
 	case edgev1alpha1.ComponentTypeNeuronEx:
@@ -95,14 +95,14 @@ func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
 	volumes = make([]corev1.Volume, 0)
 
 	compType := ins.GetComponentType()
-	pvcs := defaultPVC[compType]
-	for _, pvc := range pvcs {
+	vols := defaultVolume[compType]
+	for _, vol := range vols {
 		volume := corev1.Volume{
-			Name: pvc.name,
+			Name: vol.name,
 		}
-		if usePVC(ins) {
+		if usePVC(ins) && !vol.useEmptyDir {
 			volume.PersistentVolumeClaim = &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: internal.GetPvcName(ins, pvc.name),
+				ClaimName: internal.GetPvcName(ins, vol.name),
 			}
 		} else {
 			volume.VolumeSource = corev1.VolumeSource{
@@ -121,17 +121,17 @@ func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
 
 func getNeuronContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
 	container := ins.GetNeuron().DeepCopy()
-	var pvcs []pvcInfo
+	var vols []volumeInfo
 	if ins.GetComponentType() == edgev1alpha1.ComponentTypeNeuronEx {
-		pvcs = defaultPVC[edgev1alpha1.ComponentTypeNeuronEx]
+		vols = defaultVolume[edgev1alpha1.ComponentTypeNeuronEx]
 	} else {
-		pvcs = defaultPVC[edgev1alpha1.ComponentTypeNeuron]
+		vols = defaultVolume[edgev1alpha1.ComponentTypeNeuron]
 	}
-	for i := range pvcs {
+	for i := range vols {
 		container.VolumeMounts = append(container.VolumeMounts,
 			corev1.VolumeMount{
-				Name:      pvcs[i].name,
-				MountPath: pvcs[i].mountPath,
+				Name:      vols[i].name,
+				MountPath: vols[i].mountPath,
 			})
 	}
 	return *container
@@ -139,12 +139,12 @@ func getNeuronContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
 
 func getEkuiperContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
 	container := ins.GetEKuiper().DeepCopy()
-	pvcs := defaultPVC[edgev1alpha1.ComponentTypeEKuiper]
-	for i := range pvcs {
+	vols := defaultVolume[edgev1alpha1.ComponentTypeEKuiper]
+	for i := range vols {
 		container.VolumeMounts = append(container.VolumeMounts,
 			corev1.VolumeMount{
-				Name:      pvcs[i].name,
-				MountPath: pvcs[i].mountPath,
+				Name:      vols[i].name,
+				MountPath: vols[i].mountPath,
 			})
 	}
 	return *container
