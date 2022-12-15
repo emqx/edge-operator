@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"errors"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -194,4 +195,16 @@ func setDefaultVolume(ins EdgeInterface) {
 
 	mergeLabels(vol, ins)
 	mergeAnnotations(vol, ins)
+}
+
+func validateEKuiperImage(ins EdgeInterface) error {
+	e := ins.GetEKuiper()
+	if e == nil {
+		return errors.New("ekuiper is nil")
+	}
+
+	if !strings.HasSuffix(e.Image, "-slim-python") && !strings.HasSuffix(e.Image, "-slim") {
+		return errors.New("ekuiper image must be slim or slim-python")
+	}
+	return nil
 }

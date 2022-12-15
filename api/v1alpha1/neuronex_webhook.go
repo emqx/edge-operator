@@ -32,7 +32,7 @@ func (r *NeuronEX) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/mutate-edge-emqx-io-v1alpha1-neuronex,mutating=true,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neuronices,verbs=create;update,versions=v1alpha1,name=mutate.neuronex.edge.emqx.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/mutate-edge-emqx-io-v1alpha1-neuronex,mutating=true,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neuronexs,verbs=create;update,versions=v1alpha1,name=mutate.neuronex.edge.emqx.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &NeuronEX{}
 
@@ -61,7 +61,7 @@ func (r *NeuronEX) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-edge-emqx-io-v1alpha1-neuronex,mutating=false,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neuronices,verbs=create;update,versions=v1alpha1,name=validate.neuronex.edge.emqx.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-edge-emqx-io-v1alpha1-neuronex,mutating=false,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=neuronexs,verbs=create;update,versions=v1alpha1,name=validate.neuronex.edge.emqx.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &NeuronEX{}
 
@@ -69,7 +69,12 @@ var _ webhook.Validator = &NeuronEX{}
 func (r *NeuronEX) ValidateCreate() error {
 	neuronexlog.Info("validate create", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object creation.
+	if err := validateEKuiperImage(r); err != nil {
+		neuronexlog.Error(err, "validate ekuiper image failed")
+		return err
+	}
+
+	neuronexlog.Info("validate create success", "name", r.Name)
 	return nil
 }
 
@@ -77,7 +82,12 @@ func (r *NeuronEX) ValidateCreate() error {
 func (r *NeuronEX) ValidateUpdate(old runtime.Object) error {
 	neuronexlog.Info("validate update", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object update.
+	if err := validateEKuiperImage(r); err != nil {
+		neuronexlog.Error(err, "validate ekuiper image failed")
+		return err
+	}
+
+	neuronexlog.Info("validate update success", "name", r.Name)
 	return nil
 }
 

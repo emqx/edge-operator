@@ -58,7 +58,7 @@ func (r *EKuiper) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-edge-emqx-io-v1alpha1-ekuiper,mutating=false,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=ekuipers,verbs=create;update,versions=v1alpha1,name=vekuiper.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-edge-emqx-io-v1alpha1-ekuiper,mutating=false,failurePolicy=fail,sideEffects=None,groups=edge.emqx.io,resources=ekuipers,verbs=create;update,versions=v1alpha1,name=validate.ekuiper.edge.emqx.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &EKuiper{}
 
@@ -66,7 +66,12 @@ var _ webhook.Validator = &EKuiper{}
 func (r *EKuiper) ValidateCreate() error {
 	ekuiperlog.Info("validate create", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object creation.
+	if err := validateEKuiperImage(r); err != nil {
+		neuronexlog.Error(err, "validate ekuiper image failed")
+		return err
+	}
+
+	ekuiperlog.Info("validate create success", "name", r.Name)
 	return nil
 }
 
@@ -74,7 +79,12 @@ func (r *EKuiper) ValidateCreate() error {
 func (r *EKuiper) ValidateUpdate(old runtime.Object) error {
 	ekuiperlog.Info("validate update", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object update.
+	if err := validateEKuiperImage(r); err != nil {
+		neuronexlog.Error(err, "validate ekuiper image failed")
+		return err
+	}
+
+	ekuiperlog.Info("validate update success", "name", r.Name)
 	return nil
 }
 

@@ -63,7 +63,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - neuronices
+    - neuronexs
   sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
@@ -80,7 +80,7 @@ webhooks:
       namespace: system
       path: /validate-edge-emqx-io-v1alpha1-ekuiper
   failurePolicy: Fail
-  name: vekuiper.kb.io
+  name: validate.ekuiper.edge.emqx.io
   rules:
   - apiGroups:
     - edge.emqx.io
@@ -100,7 +100,7 @@ webhooks:
       namespace: system
       path: /validate-edge-emqx-io-v1alpha1-neuron
   failurePolicy: Fail
-  name: vneuron.kb.io
+  name: validate.neuron.edge.emqx.io
   rules:
   - apiGroups:
     - edge.emqx.io
@@ -130,5 +130,5 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - neuronices
+    - neuronexs
   sideEffects: None

@@ -11,4 +11,4 @@ metadata:
 spec:
   ekuiper:
     name: "ekuiper"
-    image: lfedge/ekuiper:latest
+    image: lfedge/ekuiper:1.7-slim-python
