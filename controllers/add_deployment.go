@@ -180,7 +180,7 @@ func getEkuiperToolContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
 
 	i := strings.Split(ins.GetEKuiper().Image, ":")
 	registry := filepath.Dir(i[0])
-	version := compile.FindString(i[1])
+	version := compile.FindString(i[1]) // if not match, version = ""
 
 	cmi := internal.ConfigMaps[internal.EKuiperToolConfig]
 	container := corev1.Container{
