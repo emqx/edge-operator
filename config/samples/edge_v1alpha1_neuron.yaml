@@ -25,4 +25,4 @@ spec:
       - ReadWriteOnce
   neuron:
     name: neuron
-    image: emqx/neuron:2.2.8
+    image: emqx/neuron:2.3.0

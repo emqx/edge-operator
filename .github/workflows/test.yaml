@@ -94,7 +94,7 @@ jobs:
         run: |
           make install
           make deploy
-      - run: kubectl wait --for=condition=Ready pods -l "control-plane=controller-manager" -n edge-operator-system --timeout=60s
+      - run: kubectl wait --for=condition=Ready pods -l "edge.emqx.io/name=edge-operator" -n edge-operator-system --timeout=60s
       - name: Get metadata
         id: meta
         run: |
@@ -114,9 +114,9 @@ jobs:
             sleep 1
           done
       - if: failure()
-        run: kubectl logs -l "control-plane=controller-manager" -n edge-operator-system -c manager --tail=100
+        run: kubectl logs -l "edge.emqx.io/name=edge-operator" -n edge-operator-system -c manager --tail=100
       - if: failure()
-        run: kubectl describe pods -l "control-plane=controller-manager" -n edge-operator-system
+        run: kubectl describe pods -l "edge.emqx.io/name=edge-operator" -n edge-operator-system
       - if: failure()
         run: kubectl describe ${{ steps.meta.outputs.kind }} ${{ steps.meta.outputs.name }}
       - if: failure()

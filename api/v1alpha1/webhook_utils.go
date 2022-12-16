@@ -14,7 +14,7 @@ var defNeuron = corev1.Container{
 	Env: []corev1.EnvVar{
 		{
 			Name:  "LOG_CONSOLE",
-			Value: "true",
+			Value: "1",
 		},
 	},
 	Ports: []corev1.ContainerPort{
