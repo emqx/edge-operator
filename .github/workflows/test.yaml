@@ -46,6 +46,12 @@ jobs:
           sudo mv kubebuilder/ /usr/local/kubebuilder
       - name: Run unit tests
         run: make test
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          files: ./cover.out # optional
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
 
   deployment:
     runs-on: ubuntu-latest
