@@ -25,14 +25,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("NeuronEX validate webhook", func() {
-	var ins *NeuronEX
+var _ = Describe("EKuiper validate webhook", func() {
+	var ins *EKuiper
 
 	BeforeEach(func() {
-		ins = new(NeuronEX)
-		ins = &NeuronEX{
+		ins = new(EKuiper)
+		ins = &EKuiper{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "neuronex",
+				Name:      "ekuiper",
 				Namespace: "default",
 			},
 		}
@@ -44,73 +44,17 @@ var _ = Describe("NeuronEX validate webhook", func() {
 		}
 	})
 
-	It("should block if container name is empty", func() {
-		ins.Spec.Neuron.Name = ""
-		Expect(k8sClient.Create(ctx, ins.DeepCopy())).Should(MatchError(matchError(ins, "neuron container name is empty")))
-
-		ins.Spec.Neuron.Name = "neuron"
-		ins.Spec.Neuron.Image = "emqx/neuron:2.3"
+	It("should block if ekuiper name is empty", func() {
 		ins.Spec.EKuiper.Name = ""
 		Expect(k8sClient.Create(ctx, ins.DeepCopy())).Should(MatchError(matchError(ins, "ekuiper container name is empty")))
 	})
 
-	It("should block if container image is empty", func() {
-		ins.Spec.Neuron.Name = "neuron"
-		ins.Spec.Neuron.Image = ""
-		Expect(k8sClient.Create(ctx, ins.DeepCopy())).Should(MatchError(matchError(ins, "neuron container image is empty")))
-
-		ins.Spec.Neuron.Name = "neuron"
-		ins.Spec.Neuron.Image = "emqx/neuron:2.3"
+	It("should block if ekuiper image is empty", func() {
 		ins.Spec.EKuiper.Name = "ekuiper"
 		ins.Spec.EKuiper.Image = ""
 		Expect(k8sClient.Create(ctx, ins.DeepCopy())).Should(MatchError(matchError(ins, "ekuiper container image is empty")))
 	})
-
-	It("should block update if container name is empty", func() {
-		ins.Spec.Neuron.Name = "neuron"
-		ins.Spec.Neuron.Image = "emqx/neuron:2.3"
-		ins.Spec.EKuiper.Name = "ekuiper"
-		ins.Spec.EKuiper.Image = "lfedge/ekuiper:1.8-slim-python"
-		Expect(k8sClient.Create(ctx, ins.DeepCopy())).Should(Succeed())
-
-		new := ins.DeepCopy()
-		new.Spec.Neuron.Name = ""
-		new.Spec.EKuiper.Name = "ekuiper"
-		Expect(k8sClient.Patch(ctx, new.DeepCopy(), client.MergeFrom(ins.DeepCopy()))).Should(MatchError(matchError(ins, "neuron container name is empty")))
-
-		new.Spec.Neuron.Name = "neuron"
-		new.Spec.EKuiper.Name = ""
-		Expect(k8sClient.Patch(ctx, new.DeepCopy(), client.MergeFrom(ins.DeepCopy()))).Should(MatchError(matchError(ins, "ekuiper container name is empty")))
-
-		new.Spec.Neuron.Name = "neuron"
-		new.Spec.EKuiper.Name = "ekuiper"
-		Expect(k8sClient.Patch(ctx, new.DeepCopy(), client.MergeFrom(ins.DeepCopy()))).Should(Succeed())
-	})
-
-	It("should block update if container image is empty", func() {
-		ins.Spec.Neuron.Name = "neuron"
-		ins.Spec.Neuron.Image = "emqx/neuron:2.3"
-		ins.Spec.EKuiper.Name = "ekuiper"
-		ins.Spec.EKuiper.Image = "lfedge/ekuiper:1.8-slim-python"
-		Expect(k8sClient.Create(ctx, ins.DeepCopy())).Should(Succeed())
-
-		new := ins.DeepCopy()
-		new.Spec.Neuron.Image = ""
-		new.Spec.EKuiper.Image = "lfedge/ekuiper:1.8-slim-python"
-		Expect(k8sClient.Patch(ctx, new.DeepCopy(), client.MergeFrom(ins.DeepCopy()))).Should(MatchError(matchError(ins, "neuron container image is empty")))
-
-		new.Spec.Neuron.Image = "emqx/neuron:2.3"
-		new.Spec.EKuiper.Image = ""
-		Expect(k8sClient.Patch(ctx, new.DeepCopy(), client.MergeFrom(ins.DeepCopy()))).Should(MatchError(matchError(ins, "ekuiper container image is empty")))
-
-		new.Spec.Neuron.Image = "emqx/neuron:2.3"
-		new.Spec.EKuiper.Image = "lfedge/ekuiper:latest-slim-python"
-		Expect(k8sClient.Patch(ctx, new.DeepCopy(), client.MergeFrom(ins.DeepCopy()))).Should(Succeed())
-	})
-
 	It("should block create if ekuiper image is not slim or slim-python", func() {
-		ins.Spec.Neuron.Name = "neuron"
-		ins.Spec.Neuron.Image = "emqx/neuron:2.3"
 		ins.Spec.EKuiper.Name = "ekuiper"
 		ins.Spec.EKuiper.Image = "lfedge/ekuiper:1.8"
 		Expect(k8sClient.Create(ctx, ins.DeepCopy())).Should(MatchError(matchError(ins, "ekuiper container image must be slim or slim-python")))
@@ -118,9 +62,33 @@ var _ = Describe("NeuronEX validate webhook", func() {
 		Expect(k8sClient.Create(ctx, ins.DeepCopy())).Should(Succeed())
 	})
 
+	It("should block update if ekuiper name is empty", func() {
+		ins.Spec.EKuiper.Name = "ekuiper"
+		ins.Spec.EKuiper.Image = "lfedge/ekuiper:1.8-slim-python"
+		Expect(k8sClient.Create(ctx, ins.DeepCopy())).Should(Succeed())
+
+		new := ins.DeepCopy()
+		new.Spec.EKuiper.Name = ""
+		Expect(k8sClient.Patch(ctx, new.DeepCopy(), client.MergeFrom(ins.DeepCopy()))).Should(MatchError(matchError(ins, "ekuiper container name is empty")))
+
+		new.Spec.EKuiper.Name = "ekuiper"
+		Expect(k8sClient.Patch(ctx, new.DeepCopy(), client.MergeFrom(ins.DeepCopy()))).Should(Succeed())
+	})
+
+	It("should block update if ekuiper image is empty", func() {
+		ins.Spec.EKuiper.Name = "ekuiper"
+		ins.Spec.EKuiper.Image = "lfedge/ekuiper:1.8-slim-python"
+		Expect(k8sClient.Create(ctx, ins.DeepCopy())).Should(Succeed())
+
+		new := ins.DeepCopy()
+		new.Spec.EKuiper.Image = ""
+		Expect(k8sClient.Patch(ctx, new.DeepCopy(), client.MergeFrom(ins.DeepCopy()))).Should(MatchError(matchError(ins, "ekuiper container image is empty")))
+
+		new.Spec.EKuiper.Image = "lfedge/ekuiper:latest-slim-python"
+		Expect(k8sClient.Patch(ctx, new.DeepCopy(), client.MergeFrom(ins.DeepCopy()))).Should(Succeed())
+	})
+
 	It("should block update if ekuiper image is slim-python or not slim-python", func() {
-		ins.Spec.Neuron.Name = "neuron"
-		ins.Spec.Neuron.Image = "emqx/neuron:2.3"
 		ins.Spec.EKuiper.Name = "ekuiper"
 		ins.Spec.EKuiper.Image = "lfedge/ekuiper:1.8-slim"
 		Expect(k8sClient.Create(ctx, ins.DeepCopy())).Should(Succeed())
@@ -133,13 +101,13 @@ var _ = Describe("NeuronEX validate webhook", func() {
 	})
 })
 
-var _ = Describe("NeuronEX default webhook", func() {
-	var ins *NeuronEX
+var _ = Describe("EKuiper default webhook", func() {
+	var ins *EKuiper
 
 	BeforeEach(func() {
-		ins = &NeuronEX{
+		ins = &EKuiper{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "neuronex",
+				Name:      "ekuiper",
 				Namespace: "default",
 				Labels: map[string]string{
 					"foo": "bar",
@@ -148,21 +116,7 @@ var _ = Describe("NeuronEX default webhook", func() {
 					"foo": "bar",
 				},
 			},
-			Spec: NeuronEXSpec{
-				Neuron: corev1.Container{
-					Name:  "neuron",
-					Image: "emqx/neuron:2.3",
-					Env: []corev1.EnvVar{
-						{Name: "foo", Value: "bar"},
-					},
-					Ports: []corev1.ContainerPort{
-						{
-							Name:          "fake-neuron",
-							ContainerPort: 1234,
-							Protocol:      corev1.ProtocolTCP,
-						},
-					},
-				},
+			Spec: EKuiperSpec{
 				EKuiper: corev1.Container{
 					Name:  "ekuiper",
 					Image: "lfedge/ekuiper:1.8-slim-python",
@@ -189,7 +143,7 @@ var _ = Describe("NeuronEX default webhook", func() {
 	})
 
 	It("check default values", func() {
-		got := &NeuronEX{}
+		got := &EKuiper{}
 		Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(ins), got)).Should(Succeed())
 
 		Expect(got.Labels).Should(HaveKeyWithValue(ManagerByKey, "edge-operator"))
@@ -198,15 +152,6 @@ var _ = Describe("NeuronEX default webhook", func() {
 		Expect(got.Labels).Should(HaveKeyWithValue("foo", "bar"))
 
 		Expect(got.Annotations).Should(HaveKeyWithValue("foo", "bar"))
-
-		Expect(got.GetNeuron().Env).Should(ConsistOf([]corev1.EnvVar{
-			{Name: "foo", Value: "bar"},
-			{Name: "LOG_CONSOLE", Value: "true"},
-		}))
-		Expect(got.GetNeuron().Ports).Should(ConsistOf([]corev1.ContainerPort{
-			{Name: "fake-neuron", ContainerPort: 1234, Protocol: corev1.ProtocolTCP},
-			{Name: "neuron", ContainerPort: 7000, Protocol: corev1.ProtocolTCP},
-		}))
 
 		Expect(got.GetEKuiper().Env).Should(ConsistOf([]corev1.EnvVar{
 			{Name: "foo", Value: "bar"},
@@ -226,9 +171,7 @@ var _ = Describe("NeuronEX default webhook", func() {
 
 		Expect(got.GetServiceTemplate().Spec.Selector).Should(Equal(got.Labels))
 		Expect(got.GetServiceTemplate().Spec.Ports).Should(ConsistOf([]corev1.ServicePort{
-			{Name: "neuron", Port: 7000, Protocol: corev1.ProtocolTCP, TargetPort: intstr.Parse("7000")},
 			{Name: "ekuiper", Port: 9081, Protocol: corev1.ProtocolTCP, TargetPort: intstr.Parse("9081")},
-			{Name: "fake-neuron", Port: 1234, Protocol: corev1.ProtocolTCP, TargetPort: intstr.Parse("1234")},
 			{Name: "fake-ekuiper", Port: 5678, Protocol: corev1.ProtocolTCP, TargetPort: intstr.Parse("5678")},
 		}))
 

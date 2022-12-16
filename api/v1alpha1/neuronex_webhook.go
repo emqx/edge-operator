@@ -73,8 +73,13 @@ var _ webhook.Validator = &NeuronEX{}
 func (r *NeuronEX) ValidateCreate() error {
 	neuronexlog.Info("validate create", "name", r.Name)
 
-	if err := validateEKuiperImage(r); err != nil {
-		neuronexlog.Error(err, "validate ekuiper image failed")
+	if err := validateNeuronContainer(r); err != nil {
+		neuronexlog.Error(err, "validate neuron container failed")
+		return err
+	}
+
+	if err := validateEKuiperContainer(r); err != nil {
+		neuronexlog.Error(err, "validate ekuiper container failed")
 		return err
 	}
 
@@ -86,8 +91,13 @@ func (r *NeuronEX) ValidateCreate() error {
 func (r *NeuronEX) ValidateUpdate(old runtime.Object) error {
 	neuronexlog.Info("validate update", "name", r.Name)
 
-	if err := validateEKuiperImage(r); err != nil {
-		neuronexlog.Error(err, "validate ekuiper image failed")
+	if err := validateNeuronContainer(r); err != nil {
+		neuronexlog.Error(err, "validate neuron container failed")
+		return err
+	}
+
+	if err := validateEKuiperContainer(r); err != nil {
+		neuronexlog.Error(err, "validate ekuiper container failed")
 		return err
 	}
 
