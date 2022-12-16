@@ -9,24 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-var defEKuiper = corev1.Container{
-	Name: "eKuiper",
-	Env: []corev1.EnvVar{
-		{
-			Name:  "KUIPER__BASIC__RESTPORT",
-			Value: "9081",
-		},
-		{
-			Name:  "KUIPER__BASIC__IGNORECASE",
-			Value: "false",
-		},
-		{
-			Name:  "KUIPER__BASIC__CONSOLELOG",
-			Value: "true",
-		},
-	},
-}
-
 var defNeuron = corev1.Container{
 	Name: "neuron",
 	Env: []corev1.EnvVar{
@@ -41,6 +23,24 @@ var defNeuron = corev1.Container{
 			Protocol: corev1.ProtocolTCP,
 			// neuron web port is hardcode in source code
 			ContainerPort: 7000,
+		},
+	},
+}
+
+var defEKuiper = corev1.Container{
+	Name: "eKuiper",
+	Env: []corev1.EnvVar{
+		{
+			Name:  "KUIPER__BASIC__RESTPORT",
+			Value: "9081",
+		},
+		{
+			Name:  "KUIPER__BASIC__IGNORECASE",
+			Value: "false",
+		},
+		{
+			Name:  "KUIPER__BASIC__CONSOLELOG",
+			Value: "true",
 		},
 	},
 }
@@ -231,6 +231,10 @@ func validateEKuiperImage(ins EdgeInterface) error {
 	e := ins.GetEKuiper()
 	if e == nil {
 		return errors.New("ekuiper is nil")
+	}
+
+	if e.Image == "" {
+		return errors.New("ekuiper image is empty")
 	}
 
 	if !strings.HasSuffix(e.Image, "-slim-python") && !strings.HasSuffix(e.Image, "-slim") {
