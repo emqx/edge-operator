@@ -1,9 +1,8 @@
 package v1alpha1
 
 const (
-	ManagerByKey = "app.kubernetes.io/manager-by"
-	InstanceKey  = "app.kubernetes.io/instance"
-	// ComponentKey provide the label name we use to store the type fo the
-	// component
-	ComponentKey = "app.kubernetes.io/name"
+	// ComponentKey provide the label name we use to store the type fo the component
+	ComponentKey = "edge.emqx.io/name"
+	InstanceKey  = "edge.emqx.io/instance"
+	ManagerByKey = "edge.emqx.io/manager-by"
 )
