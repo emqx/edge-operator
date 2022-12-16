@@ -72,10 +72,13 @@ var _ = Describe("Neuron controller", func() {
 		// neuron EX have three containers
 		Expect(deployment.Spec.Template.Spec.Containers).Should(HaveLen(1))
 		// neuron container
+		Expect(deployment.Spec.Template.Spec.Containers[0].Env).Should(ConsistOf([]corev1.EnvVar{
+			{Name: "LOG_CONSOLE", Value: "true"},
+		}))
 		Expect(deployment.Spec.Template.Spec.Containers[0].Name).Should(Equal(ins.Spec.Neuron.Name))
 		Expect(deployment.Spec.Template.Spec.Containers[0].Image).Should(Equal(ins.Spec.Neuron.Image))
 		Expect(deployment.Spec.Template.Spec.Containers[0].Ports).Should(ConsistOf([]corev1.ContainerPort{
-			{Name: "web", ContainerPort: 7000, Protocol: corev1.ProtocolTCP},
+			{Name: "neuron", ContainerPort: 7000, Protocol: corev1.ProtocolTCP},
 		}))
 		Expect(deployment.Spec.Template.Spec.Containers[0].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
 			{Name: "neuron-data", MountPath: "/opt/neuron/persistence"},
@@ -116,7 +119,7 @@ var _ = Describe("Neuron controller", func() {
 			}, timeout, interval).Should(Succeed())
 
 			Expect(service.Spec.Ports).Should(ConsistOf([]corev1.ServicePort{
-				{Name: "web", Port: 7000, Protocol: corev1.ProtocolTCP, TargetPort: intstr.FromInt(7000)},
+				{Name: "neuron", Port: 7000, Protocol: corev1.ProtocolTCP, TargetPort: intstr.FromInt(7000)},
 			}))
 		})
 
