@@ -13,7 +13,7 @@ type updateEkuiperStatus struct{}
 
 func (u updateEkuiperStatus) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.EKuiper) *requeue {
 	logger := log.WithValues("namespace", instance.Namespace, "instance", instance.Name, "reconciler",
-		"update eKuiper Status")
+		"update status")
 
 	return updateStatus(ctx, r, instance, logger)
 }
@@ -22,7 +22,7 @@ type updateNeuronStatus struct{}
 
 func (u updateNeuronStatus) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.Neuron) *requeue {
 	logger := log.WithValues("namespace", instance.Namespace, "instance", instance.Name, "reconciler",
-		"update eKuiper Status")
+		"update status")
 
 	return updateStatus(ctx, r, instance, logger)
 }
@@ -31,7 +31,7 @@ type updateNeuronEXStatus struct{}
 
 func (u updateNeuronEXStatus) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.NeuronEX) *requeue {
 	logger := log.WithValues("namespace", instance.Namespace, "instance", instance.Name, "reconciler",
-		"update eKuiper Status")
+		"update status")
 
 	return updateStatus(ctx, r, instance, logger)
 }

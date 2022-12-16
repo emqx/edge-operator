@@ -45,12 +45,15 @@ var defEKuiper = corev1.Container{
 	},
 }
 
-func getDefaultLabels(ins EdgeInterface) map[string]string {
-	return map[string]string{
-		ManagerByKey: "edge-operator",
-		InstanceKey:  ins.GetName(),
-		ComponentKey: string(ins.GetComponentType()),
+func setDefaultLabels(ins EdgeInterface) {
+	labels := ins.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
 	}
+	labels[ManagerByKey] = "edge-operator"
+	labels[InstanceKey] = ins.GetName()
+	labels[ComponentKey] = string(ins.GetComponentType())
+	ins.SetLabels(labels)
 }
 
 // mergeEnv adds environment variables to an existing environment, unless
@@ -147,6 +150,19 @@ func mergeContainerPorts(target, desired *corev1.Container) {
 	}
 }
 
+func setDefaultVolume(ins EdgeInterface) {
+	vol := ins.GetVolumeClaimTemplate()
+	if vol == nil {
+		return
+	}
+	if vol.Name == "" {
+		vol.Name = ins.GetResName()
+	}
+	vol.Namespace = ins.GetNamespace()
+	mergeLabels(vol, ins)
+	mergeAnnotations(vol, ins)
+}
+
 func setDefaultService(ins EdgeInterface) {
 	svc := ins.GetServiceTemplate()
 	if svc == nil {
@@ -158,10 +174,6 @@ func setDefaultService(ins EdgeInterface) {
 	}
 
 	svc.Namespace = ins.GetNamespace()
-	if svc.Namespace == "" {
-		svc.Namespace = "default"
-	}
-
 	mergeLabels(svc, ins)
 	mergeAnnotations(svc, ins)
 
@@ -210,21 +222,71 @@ func mergeServicePort(svc *corev1.Service, required []corev1.ServicePort) {
 	svc.Spec.Ports = target
 }
 
-func setDefaultVolume(ins EdgeInterface) {
-	vol := ins.GetVolumeClaimTemplate()
-	if vol == nil {
-		return
+func setDefaultNeuronProbe(ins EdgeInterface) {
+	neuron := ins.GetNeuron()
+	if neuron.ReadinessProbe == nil {
+		neuron.ReadinessProbe = &corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: intstr.FromInt(7000),
+				},
+			},
+		}
 	}
-	if vol.Name == "" {
-		vol.Name = ins.GetResName()
+	if neuron.LivenessProbe == nil {
+		neuron.LivenessProbe = &corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: intstr.FromInt(7000),
+				},
+			},
+		}
 	}
-	vol.Namespace = ins.GetNamespace()
-	if vol.Namespace == "" {
-		vol.Namespace = "default"
+}
+
+func setDefaultEKuiperProbe(ins EdgeInterface) {
+	ekuiper := ins.GetEKuiper()
+	port := intstr.FromInt(9081)
+	for i := range ekuiper.Env {
+		if ekuiper.Env[i].Name == "KUIPER__BASIC__RESTPORT" {
+			port = intstr.Parse(ekuiper.Env[i].Value)
+		}
 	}
 
-	mergeLabels(vol, ins)
-	mergeAnnotations(vol, ins)
+	if ekuiper.ReadinessProbe == nil {
+		ekuiper.ReadinessProbe = &corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: port,
+				},
+			},
+		}
+	}
+	if ekuiper.LivenessProbe == nil {
+		ekuiper.LivenessProbe = &corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: port,
+				},
+			},
+		}
+	}
 }
 
 func validateNeuronContainer(ins EdgeInterface) error {

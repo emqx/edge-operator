@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -43,21 +42,13 @@ var _ webhook.Defaulter = &Neuron{}
 func (r *Neuron) Default() {
 	neuronlog.Info("Set default value", "name", r.Name)
 
-	defValue := Neuron{
-		ObjectMeta: metav1.ObjectMeta{
-			Labels: getDefaultLabels(r),
-		},
-		Spec: NeuronSpec{
-			Neuron: defNeuron,
-		},
-	}
-
-	mergeLabels(r, &defValue)
-	mergeAnnotations(r, &defValue)
-	mergeEnv(r.GetNeuron(), defValue.GetNeuron())
-	mergeContainerPorts(r.GetNeuron(), defValue.GetNeuron())
+	setDefaultLabels(r)
+	mergeEnv(r.GetNeuron(), &defNeuron)
+	mergeContainerPorts(r.GetNeuron(), &defNeuron)
 	setDefaultService(r)
 	setDefaultVolume(r)
+
+	setDefaultNeuronProbe(r)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

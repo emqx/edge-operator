@@ -207,6 +207,28 @@ var _ = Describe("NeuronEX default webhook", func() {
 			{Name: "fake-neuron", ContainerPort: 1234, Protocol: corev1.ProtocolTCP},
 			{Name: "neuron", ContainerPort: 7000, Protocol: corev1.ProtocolTCP},
 		}))
+		Expect(got.GetNeuron().ReadinessProbe).Should(Equal(&corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: intstr.FromInt(7000),
+				},
+			},
+		}))
+		Expect(got.GetNeuron().LivenessProbe).Should(Equal(&corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: intstr.FromInt(7000),
+				},
+			},
+		}))
 
 		Expect(got.GetEKuiper().Env).Should(ConsistOf([]corev1.EnvVar{
 			{Name: "foo", Value: "bar"},
@@ -217,6 +239,28 @@ var _ = Describe("NeuronEX default webhook", func() {
 		Expect(got.GetEKuiper().Ports).Should(ConsistOf([]corev1.ContainerPort{
 			{Name: "fake-ekuiper", ContainerPort: 5678, Protocol: corev1.ProtocolTCP},
 			{Name: "ekuiper", ContainerPort: 9081, Protocol: corev1.ProtocolTCP},
+		}))
+		Expect(got.GetEKuiper().ReadinessProbe).Should(Equal(&corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: intstr.FromInt(9081),
+				},
+			},
+		}))
+		Expect(got.GetEKuiper().LivenessProbe).Should(Equal(&corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: intstr.FromInt(9081),
+				},
+			},
 		}))
 
 		Expect(got.GetServiceTemplate().Name).Should(Equal(got.GetResName()))

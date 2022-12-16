@@ -15,6 +15,9 @@ func GetObjectMetadata(ins client.Object, name string) metav1.ObjectMeta {
 		Annotations: ins.GetAnnotations(),
 	}
 	delete(metadata.Annotations, corev1.LastAppliedConfigAnnotation)
+	if metadata.Namespace == "" {
+		metadata.Namespace = corev1.NamespaceDefault
+	}
 	return *metadata
 }
 
