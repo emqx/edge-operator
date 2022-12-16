@@ -47,36 +47,21 @@ func (n *NeuronEX) GetResName() string {
 func (n *NeuronEX) GetEdgePodSpec() EdgePodSpec {
 	return n.Spec.EdgePodSpec
 }
-func (n *NeuronEX) SetEdgePodSpec(spec EdgePodSpec) {
-	n.Spec.EdgePodSpec = spec
-}
 
 func (n *NeuronEX) GetNeuron() *corev1.Container {
 	return &n.Spec.Neuron
-}
-func (n *NeuronEX) SetNeuron(container *corev1.Container) {
-	n.Spec.Neuron = *container.DeepCopy()
 }
 
 func (n *NeuronEX) GetEKuiper() *corev1.Container {
 	return &n.Spec.EKuiper
 }
-func (n *NeuronEX) SetEKuiper(container *corev1.Container) {
-	n.Spec.EKuiper = *container.DeepCopy()
-}
 
 func (n *NeuronEX) GetVolumeClaimTemplate() *corev1.PersistentVolumeClaim {
 	return n.Spec.VolumeClaimTemplate
 }
-func (n *NeuronEX) SetVolumeClaimTemplate(claim *corev1.PersistentVolumeClaim) {
-	n.Spec.VolumeClaimTemplate = claim
-}
 
 func (n *NeuronEX) GetServiceTemplate() *corev1.Service {
 	return n.Spec.ServiceTemplate
-}
-func (n *NeuronEX) SetServiceTemplate(service *corev1.Service) {
-	n.Spec.ServiceTemplate = service
 }
 
 // NeuronEXStatus defines the observed state of NeuronEX

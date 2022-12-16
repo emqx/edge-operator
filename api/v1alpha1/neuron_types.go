@@ -54,28 +54,17 @@ func (n *Neuron) SetEdgePodSpec(spec EdgePodSpec) {
 func (n *Neuron) GetNeuron() *corev1.Container {
 	return &n.Spec.Neuron
 }
-func (n *Neuron) SetNeuron(container *corev1.Container) {
-	n.Spec.Neuron = *container.DeepCopy()
-}
 
 func (n *Neuron) GetEKuiper() *corev1.Container {
 	return nil
-}
-func (n *Neuron) SetEKuiper(container *corev1.Container) {
 }
 
 func (n *Neuron) GetVolumeClaimTemplate() *corev1.PersistentVolumeClaim {
 	return n.Spec.VolumeClaimTemplate
 }
-func (n *Neuron) SetVolumeClaimTemplate(claim *corev1.PersistentVolumeClaim) {
-	n.Spec.VolumeClaimTemplate = claim
-}
 
 func (n *Neuron) GetServiceTemplate() *corev1.Service {
 	return n.Spec.ServiceTemplate
-}
-func (n *Neuron) SetServiceTemplate(service *corev1.Service) {
-	n.Spec.ServiceTemplate = service
 }
 
 // NeuronStatus defines the observed state of Neuron
