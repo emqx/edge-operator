@@ -23,7 +23,7 @@ func GetPVC(ins edgev1alpha1.EdgeInterface, shortName string) (pvc corev1.Persis
 func GetPvcName(ins edgev1alpha1.EdgeInterface, shortName string) string {
 	claim := ins.GetVolumeClaimTemplate()
 	if claim != nil && claim.Name != "" {
-		shortName = claim.Name + "-" + shortName
+		return GetResNameOnPanic(claim, shortName)
 	}
 	return GetResNameOnPanic(ins, shortName)
 }
