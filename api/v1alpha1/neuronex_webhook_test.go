@@ -201,7 +201,7 @@ var _ = Describe("NeuronEX default webhook", func() {
 
 		Expect(got.GetNeuron().Env).Should(ConsistOf([]corev1.EnvVar{
 			{Name: "foo", Value: "bar"},
-			{Name: "LOG_CONSOLE", Value: "true"},
+			{Name: "LOG_CONSOLE", Value: "1"},
 		}))
 		Expect(got.GetNeuron().Ports).Should(ConsistOf([]corev1.ContainerPort{
 			{Name: "fake-neuron", ContainerPort: 1234, Protocol: corev1.ProtocolTCP},

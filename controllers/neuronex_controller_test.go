@@ -96,7 +96,7 @@ var _ = Describe("NeuronEX controller", func() {
 		Expect(deployment.Spec.Template.Spec.Containers).Should(HaveLen(3))
 		// neuron container
 		Expect(deployment.Spec.Template.Spec.Containers[0].Env).Should(ConsistOf([]corev1.EnvVar{
-			{Name: "LOG_CONSOLE", Value: "true"},
+			{Name: "LOG_CONSOLE", Value: "1"},
 		}))
 		Expect(deployment.Spec.Template.Spec.Containers[0].Name).Should(Equal(ins.Spec.Neuron.Name))
 		Expect(deployment.Spec.Template.Spec.Containers[0].Image).Should(Equal(ins.Spec.Neuron.Image))

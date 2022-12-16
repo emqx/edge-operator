@@ -9,8 +9,8 @@ namespace: edge-operator-system
 namePrefix: edge-operator-
 
 # Labels to add to all resources and selectors.
-#commonLabels:
-#  someName: someValue
+commonLabels:
+  edge.emqx.io/name: "edge-operator"
 
 bases:
 - ../crd
