@@ -23,7 +23,7 @@ var defaultVolume = map[edgev1alpha1.ComponentType][]volumeInfo{
 	},
 	edgev1alpha1.ComponentTypeEKuiper: {
 		{name: "ekuiper-data", mountPath: "/kuiper/data"},
-		{name: "ekuiper-plugin", mountPath: "/kuiper/plugins/portable"},
+		{name: "ekuiper-plugins", mountPath: "/kuiper/plugins/portable"},
 	},
 	edgev1alpha1.ComponentTypeNeuron: {
 		{name: "neuron-data", mountPath: "/opt/neuron/persistence"},
