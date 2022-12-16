@@ -69,8 +69,8 @@ var _ webhook.Validator = &EKuiper{}
 func (r *EKuiper) ValidateCreate() error {
 	ekuiperlog.Info("validate create", "name", r.Name)
 
-	if err := validateEKuiperImage(r); err != nil {
-		neuronexlog.Error(err, "validate ekuiper image failed")
+	if err := validateEKuiperContainer(r); err != nil {
+		neuronexlog.Error(err, "validate ekuiper container failed")
 		return err
 	}
 
@@ -82,8 +82,8 @@ func (r *EKuiper) ValidateCreate() error {
 func (r *EKuiper) ValidateUpdate(old runtime.Object) error {
 	ekuiperlog.Info("validate update", "name", r.Name)
 
-	if err := validateEKuiperImage(r); err != nil {
-		neuronexlog.Error(err, "validate ekuiper image failed")
+	if err := validateEKuiperContainer(r); err != nil {
+		neuronexlog.Error(err, "validate ekuiper container failed")
 		return err
 	}
 
