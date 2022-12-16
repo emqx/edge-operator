@@ -21,19 +21,10 @@ type EdgeInterface interface {
 	GetResName() string
 
 	GetEdgePodSpec() EdgePodSpec
-	SetEdgePodSpec(EdgePodSpec)
-
 	GetNeuron() *corev1.Container
-	SetNeuron(*corev1.Container)
-
 	GetEKuiper() *corev1.Container
-	SetEKuiper(*corev1.Container)
-
 	GetVolumeClaimTemplate() *corev1.PersistentVolumeClaim
-	SetVolumeClaimTemplate(*corev1.PersistentVolumeClaim)
-
 	GetServiceTemplate() *corev1.Service
-	SetServiceTemplate(*corev1.Service)
 
 	GetStatus() EdgeStatus
 	SetStatus(status EdgeStatus)

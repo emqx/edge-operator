@@ -98,9 +98,6 @@ jobs:
       - name: Get metadata
         id: meta
         run: |
-          namespace=$(yq '.metadata.namespace' ${{ matrix.file }})
-          if [ "${namespace}" = "null" ]; then namespace="default"; fi
-          echo "namespace=${namespace}" >> $GITHUB_OUTPUT
           name=$(yq '.metadata.name' ${{ matrix.file }})
           echo "name=${name}" >> $GITHUB_OUTPUT
           kind=$(yq '.kind' ${{ matrix.file }})

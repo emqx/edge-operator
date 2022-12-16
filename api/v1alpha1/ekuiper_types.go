@@ -45,35 +45,21 @@ func (ek *EKuiper) GetResName() string {
 func (ek *EKuiper) GetEdgePodSpec() EdgePodSpec {
 	return ek.Spec.EdgePodSpec
 }
-func (ek *EKuiper) SetEdgePodSpec(spec EdgePodSpec) {
-	ek.Spec.EdgePodSpec = spec
-}
 
 func (ek *EKuiper) GetNeuron() *corev1.Container {
 	return nil
-}
-func (ek *EKuiper) SetNeuron(container *corev1.Container) {
 }
 
 func (ek *EKuiper) GetEKuiper() *corev1.Container {
 	return &ek.Spec.EKuiper
 }
-func (ek *EKuiper) SetEKuiper(container *corev1.Container) {
-	ek.Spec.EKuiper = *container.DeepCopy()
-}
 
 func (ek *EKuiper) GetVolumeClaimTemplate() *corev1.PersistentVolumeClaim {
 	return ek.Spec.VolumeClaimTemplate
 }
-func (ek *EKuiper) SetVolumeClaimTemplate(claim *corev1.PersistentVolumeClaim) {
-	ek.Spec.VolumeClaimTemplate = claim
-}
 
 func (ek *EKuiper) GetServiceTemplate() *corev1.Service {
 	return ek.Spec.ServiceTemplate
-}
-func (ek *EKuiper) SetServiceTemplate(service *corev1.Service) {
-	ek.Spec.ServiceTemplate = service
 }
 
 // EKuiperStatus defines the observed state of EKuiper
