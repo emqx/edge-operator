@@ -199,6 +199,9 @@ func setDefaultVolume(ins EdgeInterface) {
 	if vol == nil {
 		return
 	}
+	if vol.Name == "" {
+		vol.Name = ins.GetResName()
+	}
 	vol.Namespace = ins.GetNamespace()
 	if vol.Namespace == "" {
 		vol.Namespace = "default"
