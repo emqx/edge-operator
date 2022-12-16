@@ -40,13 +40,11 @@ var defNeuron = corev1.Container{
 	},
 }
 
-func getCRObjectMeta(insName string, compType ComponentType) metav1.ObjectMeta {
-	return metav1.ObjectMeta{
-		Labels: map[string]string{
-			ManagerByKey: "edge-operator",
-			InstanceKey:  insName,
-			ComponentKey: string(compType),
-		},
+func getDefaultLabels(ins EdgeInterface) map[string]string {
+	return map[string]string{
+		ManagerByKey: "edge-operator",
+		InstanceKey:  ins.GetName(),
+		ComponentKey: string(ins.GetComponentType()),
 	}
 }
 
@@ -90,6 +88,9 @@ func mergeAnnotations(target, desired metav1.Object) {
 //
 // This will return whether the target's values have changed.
 func mergeMap(target map[string]string, desired map[string]string) map[string]string {
+	if target == nil {
+		target = make(map[string]string)
+	}
 	for key, value := range desired {
 		if target[key] != value {
 			target[key] = value
