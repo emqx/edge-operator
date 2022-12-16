@@ -9,25 +9,35 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-const (
-	eKuiperBaseRestPort = "KUIPER__BASIC__RESTPORT"
-)
-
 var defEKuiper = corev1.Container{
 	Name: "eKuiper",
 	Env: []corev1.EnvVar{
 		{
-			Name:  eKuiperBaseRestPort,
+			Name:  "KUIPER__BASIC__RESTPORT",
 			Value: "9081",
+		},
+		{
+			Name:  "KUIPER__BASIC__IGNORECASE",
+			Value: "false",
+		},
+		{
+			Name:  "KUIPER__BASIC__CONSOLELOG",
+			Value: "true",
 		},
 	},
 }
 
 var defNeuron = corev1.Container{
 	Name: "neuron",
+	Env: []corev1.EnvVar{
+		{
+			Name:  "LOG_CONSOLE",
+			Value: "true",
+		},
+	},
 	Ports: []corev1.ContainerPort{
 		{
-			Name:     "web",
+			Name:     "neuron",
 			Protocol: corev1.ProtocolTCP,
 			// neuron web port is hardcode in source code
 			ContainerPort: 7000,
@@ -97,14 +107,11 @@ func mergeMap(target map[string]string, desired map[string]string) map[string]st
 func setContainerPortsFromEnv(container *corev1.Container) {
 	envs := container.Env
 	for i := range envs {
-		if envs[i].Name == eKuiperBaseRestPort {
-			s := strings.SplitAfter(envs[i].Name, "KUIPER__")[1]
-			name := strings.ToLower(strings.ReplaceAll(s, "__", "-"))
-
+		if envs[i].Name == "KUIPER__BASIC__RESTPORT" {
 			found := false
 			index := 0
 			for index <= len(container.Ports)-1 {
-				if container.Ports[index].Name == name {
+				if container.Ports[index].Name == "ekuiper" {
 					found = true
 					break
 				}
@@ -115,7 +122,7 @@ func setContainerPortsFromEnv(container *corev1.Container) {
 				continue
 			}
 			container.Ports = append(container.Ports, corev1.ContainerPort{
-				Name:          name,
+				Name:          "ekuiper",
 				ContainerPort: intstr.Parse(envs[i].Value).IntVal,
 				Protocol:      corev1.ProtocolTCP,
 			})

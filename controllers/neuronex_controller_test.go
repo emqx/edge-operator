@@ -95,10 +95,13 @@ var _ = Describe("NeuronEX controller", func() {
 		// neuron EX have three containers
 		Expect(deployment.Spec.Template.Spec.Containers).Should(HaveLen(3))
 		// neuron container
+		Expect(deployment.Spec.Template.Spec.Containers[0].Env).Should(ConsistOf([]corev1.EnvVar{
+			{Name: "LOG_CONSOLE", Value: "true"},
+		}))
 		Expect(deployment.Spec.Template.Spec.Containers[0].Name).Should(Equal(ins.Spec.Neuron.Name))
 		Expect(deployment.Spec.Template.Spec.Containers[0].Image).Should(Equal(ins.Spec.Neuron.Image))
 		Expect(deployment.Spec.Template.Spec.Containers[0].Ports).Should(ConsistOf([]corev1.ContainerPort{
-			{Name: "web", ContainerPort: 7000, Protocol: corev1.ProtocolTCP},
+			{Name: "neuron", ContainerPort: 7000, Protocol: corev1.ProtocolTCP},
 		}))
 		Expect(deployment.Spec.Template.Spec.Containers[0].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
 			{Name: "shared-tmp", MountPath: "/tmp"},
@@ -109,9 +112,11 @@ var _ = Describe("NeuronEX controller", func() {
 		Expect(deployment.Spec.Template.Spec.Containers[1].Image).Should(Equal(ins.Spec.EKuiper.Image))
 		Expect(deployment.Spec.Template.Spec.Containers[1].Env).Should(ConsistOf([]corev1.EnvVar{
 			{Name: "KUIPER__BASIC__RESTPORT", Value: "9081"},
+			{Name: "KUIPER__BASIC__IGNORECASE", Value: "false"},
+			{Name: "KUIPER__BASIC__CONSOLELOG", Value: "true"},
 		}))
 		Expect(deployment.Spec.Template.Spec.Containers[1].Ports).Should(ConsistOf([]corev1.ContainerPort{
-			{Name: "basic-restport", ContainerPort: 9081, Protocol: corev1.ProtocolTCP},
+			{Name: "ekuiper", ContainerPort: 9081, Protocol: corev1.ProtocolTCP},
 		}))
 		Expect(deployment.Spec.Template.Spec.Containers[1].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
 			{Name: "shared-tmp", MountPath: "/tmp"},
@@ -166,8 +171,8 @@ var _ = Describe("NeuronEX controller", func() {
 			}, timeout, interval).Should(Succeed())
 
 			Expect(service.Spec.Ports).Should(ConsistOf([]corev1.ServicePort{
-				{Name: "web", Port: 7000, Protocol: corev1.ProtocolTCP, TargetPort: intstr.FromInt(7000)},
-				{Name: "basic-restport", Port: 9081, Protocol: corev1.ProtocolTCP, TargetPort: intstr.FromInt(9081)},
+				{Name: "neuron", Port: 7000, Protocol: corev1.ProtocolTCP, TargetPort: intstr.FromInt(7000)},
+				{Name: "ekuiper", Port: 9081, Protocol: corev1.ProtocolTCP, TargetPort: intstr.FromInt(9081)},
 			}))
 		})
 

@@ -75,9 +75,11 @@ var _ = Describe("EKuiper controller", func() {
 		Expect(deployment.Spec.Template.Spec.Containers[0].Image).Should(Equal(ins.Spec.EKuiper.Image))
 		Expect(deployment.Spec.Template.Spec.Containers[0].Env).Should(ConsistOf([]corev1.EnvVar{
 			{Name: "KUIPER__BASIC__RESTPORT", Value: "9081"},
+			{Name: "KUIPER__BASIC__IGNORECASE", Value: "false"},
+			{Name: "KUIPER__BASIC__CONSOLELOG", Value: "true"},
 		}))
 		Expect(deployment.Spec.Template.Spec.Containers[0].Ports).Should(ConsistOf([]corev1.ContainerPort{
-			{Name: "basic-restport", ContainerPort: 9081, Protocol: corev1.ProtocolTCP},
+			{Name: "ekuiper", ContainerPort: 9081, Protocol: corev1.ProtocolTCP},
 		}))
 		Expect(deployment.Spec.Template.Spec.Containers[0].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
 			{Name: "ekuiper-data", MountPath: "/kuiper/data"},
@@ -113,7 +115,7 @@ var _ = Describe("EKuiper controller", func() {
 			}, timeout, interval).Should(Succeed())
 
 			Expect(service.Spec.Ports).Should(ConsistOf([]corev1.ServicePort{
-				{Name: "basic-restport", Port: 9081, Protocol: corev1.ProtocolTCP, TargetPort: intstr.FromInt(9081)},
+				{Name: "ekuiper", Port: 9081, Protocol: corev1.ProtocolTCP, TargetPort: intstr.FromInt(9081)},
 			}))
 		})
 
