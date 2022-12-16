@@ -9,17 +9,12 @@ import (
 )
 
 const (
-	eKuiperBasePort     = "KUIPER__BASIC__PORT"
 	eKuiperBaseRestPort = "KUIPER__BASIC__RESTPORT"
 )
 
 var defEKuiper = corev1.Container{
 	Name: "eKuiper",
 	Env: []corev1.EnvVar{
-		{
-			Name:  eKuiperBasePort,
-			Value: "20498",
-		},
 		{
 			Name:  eKuiperBaseRestPort,
 			Value: "9081",
@@ -100,9 +95,23 @@ func mergeMap(target map[string]string, desired map[string]string) map[string]st
 func setContainerPortsFromEnv(container *corev1.Container) {
 	envs := container.Env
 	for i := range envs {
-		if envs[i].Name == eKuiperBasePort || envs[i].Name == eKuiperBaseRestPort {
+		if envs[i].Name == eKuiperBaseRestPort {
 			s := strings.SplitAfter(envs[i].Name, "KUIPER__")[1]
 			name := strings.ToLower(strings.ReplaceAll(s, "__", "-"))
+
+			found := false
+			index := 0
+			for index <= len(container.Ports)-1 {
+				if container.Ports[index].Name == name {
+					found = true
+					break
+				}
+				index++
+			}
+			if found {
+				container.Ports[index].ContainerPort = intstr.Parse(envs[i].Value).IntVal
+				continue
+			}
 			container.Ports = append(container.Ports, corev1.ContainerPort{
 				Name:          name,
 				ContainerPort: intstr.Parse(envs[i].Value).IntVal,
