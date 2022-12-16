@@ -17,20 +17,22 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -41,6 +43,10 @@ var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
 
+var ctx context.Context
+var cancel context.CancelFunc
+var timeout, interval time.Duration
+
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
@@ -48,6 +54,10 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	ctx, cancel = context.WithCancel(context.TODO())
+	timeout = time.Second * 10
+	interval = time.Millisecond * 250
+
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	By("bootstrapping test environment")
@@ -71,9 +81,25 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme:             scheme.Scheme,
+		MetricsBindAddress: "0",
+	})
+	Expect(NewNeuronEXReconciler(mgr).SetupWithManager(mgr)).Should(Succeed())
+	Expect(NewNeuronReconciler(mgr).SetupWithManager(mgr)).Should(Succeed())
+	Expect(NewEKuiperReconciler(mgr).SetupWithManager(mgr)).Should(Succeed())
+
+	go func() {
+		defer GinkgoRecover()
+		//https://github.com/hazelcast/hazelcast-platform-operator/commit/1fa58002a4f567ef4d6c2f53c919ad6f84d8bbc1
+		err = mgr.Start(ctx)
+		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
+	}()
 })
 
 var _ = AfterSuite(func() {
+	// https://github.com/kubernetes-sigs/controller-runtime/issues/1571
+	cancel()
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
