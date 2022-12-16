@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -43,7 +44,9 @@ func (r *EKuiper) Default() {
 	ekuiperlog.Info("Set default value", "name", r.Name)
 
 	defValue := EKuiper{
-		ObjectMeta: getCRObjectMeta(r.Name, ComponentTypeEKuiper),
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: getDefaultLabels(r),
+		},
 		Spec: EKuiperSpec{
 			EKuiper: defEKuiper,
 		},

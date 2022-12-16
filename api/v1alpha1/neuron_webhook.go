@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -43,7 +44,9 @@ func (r *Neuron) Default() {
 	neuronlog.Info("Set default value", "name", r.Name)
 
 	defValue := Neuron{
-		ObjectMeta: getCRObjectMeta(r.Name, ComponentTypeNeuron),
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: getDefaultLabels(r),
+		},
 		Spec: NeuronSpec{
 			Neuron: defNeuron,
 		},
