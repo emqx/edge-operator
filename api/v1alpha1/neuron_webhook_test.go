@@ -142,6 +142,28 @@ var _ = Describe("Neuron default webhook", func() {
 			{Name: "fake-neuron", ContainerPort: 1234, Protocol: corev1.ProtocolTCP},
 			{Name: "neuron", ContainerPort: 7000, Protocol: corev1.ProtocolTCP},
 		}))
+		Expect(got.GetNeuron().ReadinessProbe).Should(Equal(&corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: intstr.FromInt(7000),
+				},
+			},
+		}))
+		Expect(got.GetNeuron().LivenessProbe).Should(Equal(&corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: intstr.FromInt(7000),
+				},
+			},
+		}))
 
 		Expect(got.GetServiceTemplate().Name).Should(Equal(got.GetResName()))
 		Expect(got.GetServiceTemplate().Namespace).Should(Equal(got.GetNamespace()))

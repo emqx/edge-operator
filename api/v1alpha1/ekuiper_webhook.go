@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -43,21 +42,12 @@ var _ webhook.Defaulter = &EKuiper{}
 func (r *EKuiper) Default() {
 	ekuiperlog.Info("Set default value", "name", r.Name)
 
-	defValue := EKuiper{
-		ObjectMeta: metav1.ObjectMeta{
-			Labels: getDefaultLabels(r),
-		},
-		Spec: EKuiperSpec{
-			EKuiper: defEKuiper,
-		},
-	}
-
-	mergeLabels(r, &defValue)
-	mergeAnnotations(r, &defValue)
-	mergeEnv(r.GetEKuiper(), defValue.GetEKuiper())
+	setDefaultLabels(r)
+	mergeEnv(r.GetEKuiper(), &defEKuiper)
 	setContainerPortsFromEnv(r.GetEKuiper())
 	setDefaultService(r)
 	setDefaultVolume(r)
+	setDefaultEKuiperProbe(r)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

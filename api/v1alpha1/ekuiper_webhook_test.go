@@ -163,6 +163,28 @@ var _ = Describe("EKuiper default webhook", func() {
 			{Name: "fake-ekuiper", ContainerPort: 5678, Protocol: corev1.ProtocolTCP},
 			{Name: "ekuiper", ContainerPort: 9081, Protocol: corev1.ProtocolTCP},
 		}))
+		Expect(got.GetEKuiper().ReadinessProbe).Should(Equal(&corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: intstr.FromInt(9081),
+				},
+			},
+		}))
+		Expect(got.GetEKuiper().LivenessProbe).Should(Equal(&corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			FailureThreshold:    12,
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "",
+					Port: intstr.FromInt(9081),
+				},
+			},
+		}))
 
 		Expect(got.GetServiceTemplate().Name).Should(Equal(got.GetResName()))
 		Expect(got.GetServiceTemplate().Namespace).Should(Equal(got.GetNamespace()))

@@ -114,8 +114,12 @@ jobs:
             sleep 1
           done
       - if: failure()
-        run: kubectl describe pods -l "control-plane=controller-manager" -n edge-operator-system
-      - if: failure()
         run: kubectl logs -l "control-plane=controller-manager" -n edge-operator-system -c manager --tail=100
       - if: failure()
+        run: kubectl describe pods -l "control-plane=controller-manager" -n edge-operator-system
+      - if: failure()
         run: kubectl describe ${{ steps.meta.outputs.kind }} ${{ steps.meta.outputs.name }}
+      - if: failure()
+        run: kubectl describe pod -l "app.kubernetes.io/instance=${{ steps.meta.outputs.name }}"
+      - if: failure()
+        run: kubectl get pod -l "app.kubernetes.io/instance=${{ steps.meta.outputs.name }}" -o json
