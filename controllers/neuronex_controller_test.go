@@ -92,7 +92,7 @@ var _ = Describe("NeuronEX controller", func() {
 	It("should create configMap", func() {
 		configMap := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      internal.GetResNameOnPanic(ins, internal.EKuiperToolConfig),
+				Name:      internal.GetResNameOnPanic(ins, ekuiperToolConfig),
 				Namespace: ins.Namespace,
 			},
 		}
@@ -167,7 +167,7 @@ var _ = Describe("NeuronEX controller", func() {
 			{Name: "ekuiper-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
 			{Name: "ekuiper-plugins", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
 			{Name: "ekuiper-tool-config", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{Name: internal.GetResNameOnPanic(ins, internal.EKuiperToolConfig)},
+				LocalObjectReference: corev1.LocalObjectReference{Name: internal.GetResNameOnPanic(ins, ekuiperToolConfig)},
 				DefaultMode:          &[]int32{corev1.ConfigMapVolumeSourceDefaultMode}[0],
 			}}},
 		}))
@@ -245,7 +245,7 @@ var _ = Describe("NeuronEX controller", func() {
 				{Name: "ekuiper-plugins", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: new.Spec.VolumeClaimTemplate.Name + "-ekuiper-plugins"}}},
 				{Name: "ekuiper-tool-config", VolumeSource: corev1.VolumeSource{
 					ConfigMap: &corev1.ConfigMapVolumeSource{
-						LocalObjectReference: corev1.LocalObjectReference{Name: internal.GetResNameOnPanic(new, internal.EKuiperToolConfig)},
+						LocalObjectReference: corev1.LocalObjectReference{Name: internal.GetResNameOnPanic(new, ekuiperToolConfig)},
 						DefaultMode:          &[]int32{corev1.ConfigMapVolumeSourceDefaultMode}[0],
 					},
 				}},

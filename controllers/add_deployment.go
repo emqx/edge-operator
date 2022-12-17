@@ -86,22 +86,28 @@ func getPodSpec(instance edgev1alpha1.EdgeInterface) corev1.PodSpec {
 	edgePodSpec := instance.GetEdgePodSpec()
 	structAssign(podSpec, &edgePodSpec)
 
-	podSpec.Volumes = append(podSpec.Volumes, getVolumes(instance)...)
+	vols := getVolumeList(instance)
+	for i := range vols {
+		podSpec.Volumes = append(podSpec.Volumes, corev1.Volume{
+			Name:         vols[i].name,
+			VolumeSource: vols[i].volumeSource,
+		})
+	}
 
 	switch instance.GetComponentType() {
 	case edgev1alpha1.ComponentTypeNeuronEx:
 		podSpec.Containers = []corev1.Container{
-			getNeuronContainer(instance),
-			getEkuiperContainer(instance),
-			getEkuiperToolContainer(instance),
+			getNeuronContainer(instance, vols...),
+			getEkuiperContainer(instance, vols...),
+			getEkuiperToolContainer(instance, vols...),
 		}
 	case edgev1alpha1.ComponentTypeEKuiper:
 		podSpec.Containers = []corev1.Container{
-			getEkuiperContainer(instance),
+			getEkuiperContainer(instance, vols...),
 		}
 	case edgev1alpha1.ComponentTypeNeuron:
 		podSpec.Containers = []corev1.Container{
-			getNeuronContainer(instance),
+			getNeuronContainer(instance, vols...),
 		}
 	default:
 		panic("unknown component " + instance.GetComponentType())
@@ -112,97 +118,61 @@ func getPodSpec(instance edgev1alpha1.EdgeInterface) corev1.PodSpec {
 func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
 	volumes = make([]corev1.Volume, 0)
 
-	compType := ins.GetComponentType()
-	vols := defaultVolume[compType]
-	// merge the volumes of ekuiper and neuron when type is NeuronEx
-	if compType == edgev1alpha1.ComponentTypeNeuronEx {
-		mergeVolumes(&vols)
-	}
-	for _, vol := range vols {
-		volume := corev1.Volume{
-			Name: vol.name,
-		}
-		if ins.GetVolumeClaimTemplate() != nil && !vol.useEmptyDir {
-			volume.PersistentVolumeClaim = &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: internal.GetResNameOnPanic(ins.GetVolumeClaimTemplate(), vol.name),
-			}
-		} else {
-			volume.VolumeSource = corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			}
-		}
-		volumes = append(volumes, volume)
-	}
-
-	if ins.GetComponentType() == edgev1alpha1.ComponentTypeNeuronEx {
-		cm := internal.ConfigMaps[internal.EKuiperToolConfig]
-		volumes = append(volumes, corev1.Volume{
-			Name: cm.MountName,
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: internal.GetResNameOnPanic(ins, cm.MapNameSuffix),
-					},
-				},
-			},
-		})
-	}
 	return
 }
 
-func getNeuronContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
+func getNeuronContainer(ins edgev1alpha1.EdgeInterface, vols ...volumeInfo) corev1.Container {
 	container := ins.GetNeuron().DeepCopy()
-	var vols []volumeInfo
-	vols = defaultVolume[edgev1alpha1.ComponentTypeNeuron]
-	if ins.GetComponentType() == edgev1alpha1.ComponentTypeNeuronEx {
-		vols = append(vols, defaultVolume[edgev1alpha1.ComponentTypeNeuronEx]...)
-	}
 	for i := range vols {
-		container.VolumeMounts = append(container.VolumeMounts,
-			corev1.VolumeMount{
-				Name:      vols[i].name,
-				MountPath: vols[i].mountPath,
-			})
+		for _, m := range vols[i].mountTo {
+			if m == mountToNeuron {
+				container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+					Name:      vols[i].name,
+					MountPath: vols[i].mountPath,
+				})
+			}
+		}
 	}
 	return *container
 }
 
-func getEkuiperContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
+func getEkuiperContainer(ins edgev1alpha1.EdgeInterface, vols ...volumeInfo) corev1.Container {
 	container := ins.GetEKuiper().DeepCopy()
-	var vols []volumeInfo
-	vols = defaultVolume[edgev1alpha1.ComponentTypeEKuiper]
-	if ins.GetComponentType() == edgev1alpha1.ComponentTypeNeuronEx {
-		vols = append(vols, defaultVolume[edgev1alpha1.ComponentTypeNeuronEx]...)
-	}
 	for i := range vols {
-		container.VolumeMounts = append(container.VolumeMounts,
-			corev1.VolumeMount{
-				Name:      vols[i].name,
-				MountPath: vols[i].mountPath,
-			})
+		for _, m := range vols[i].mountTo {
+			if m == mountToEkuiper {
+				container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+					Name:      vols[i].name,
+					MountPath: vols[i].mountPath,
+				})
+			}
+		}
 	}
 	return *container
 }
 
-func getEkuiperToolContainer(ins edgev1alpha1.EdgeInterface) corev1.Container {
+func getEkuiperToolContainer(ins edgev1alpha1.EdgeInterface, vols ...volumeInfo) corev1.Container {
 	compile := regexp.MustCompile(`[0-9]+(\.[0-9]+)?(\.[0-9]+)?(-(alpha|beta|rc)\.[0-9]+)?`)
 
 	i := strings.Split(ins.GetEKuiper().Image, ":")
 	registry := filepath.Dir(i[0])
 	version := compile.FindString(i[1]) // if not match, version = ""
 
-	cmi := internal.ConfigMaps[internal.EKuiperToolConfig]
 	container := corev1.Container{
 		Name:            "ekuiper-tool",
 		Image:           registry + "/ekuiper-kubernetes-tool:" + version,
 		ImagePullPolicy: ins.GetEKuiper().ImagePullPolicy,
-		VolumeMounts: []corev1.VolumeMount{
-			{
-				Name:      cmi.MountName,
-				MountPath: cmi.MountPath,
-				ReadOnly:  true,
-			},
-		},
+	}
+	for i := range vols {
+		for _, m := range vols[i].mountTo {
+			if m == mountToEkuiperTool {
+				container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+					Name:      vols[i].name,
+					MountPath: vols[i].mountPath,
+					ReadOnly:  true,
+				})
+			}
+		}
 	}
 	return container
 }

@@ -11,25 +11,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type volumeInfo struct {
-	name        string
-	mountPath   string
-	useEmptyDir bool
-}
-
-var defaultVolume = map[edgev1alpha1.ComponentType][]volumeInfo{
-	edgev1alpha1.ComponentTypeNeuronEx: {
-		{name: "shared-tmp", mountPath: "/tmp", useEmptyDir: true},
-	},
-	edgev1alpha1.ComponentTypeEKuiper: {
-		{name: "ekuiper-data", mountPath: "/kuiper/data"},
-		{name: "ekuiper-plugins", mountPath: "/kuiper/plugins/portable"},
-	},
-	edgev1alpha1.ComponentTypeNeuron: {
-		{name: "neuron-data", mountPath: "/opt/neuron/persistence"},
-	},
-}
-
 type addEKuiperPVC struct{}
 
 func (a addEKuiperPVC) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.EKuiper) *requeue {
@@ -69,13 +50,9 @@ func (a addNeuronExPVC) reconcile(ctx context.Context, r *EdgeController, instan
 func addPVC(ctx context.Context, r *EdgeController, ins edgev1alpha1.EdgeInterface, compType edgev1alpha1.ComponentType,
 	logger logr.Logger) *requeue {
 
-	vols := defaultVolume[compType]
-	// merge the volumes of ekuiper and neuron when type is NeuronEx
-	if compType == edgev1alpha1.ComponentTypeNeuronEx {
-		mergeVolumes(&vols)
-	}
+	vols := getVolumeList(ins)
 	for i := range vols {
-		if vols[i].useEmptyDir {
+		if vols[i].volumeSource.PersistentVolumeClaim == nil {
 			continue
 		}
 		pvc := ins.GetVolumeClaimTemplate().DeepCopy()
