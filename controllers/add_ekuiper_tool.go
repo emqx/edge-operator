@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emqx/edge-operator/internal"
+	jsoniter "github.com/json-iterator/go"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -13,22 +14,44 @@ import (
 
 type addEkuiperTool struct{}
 
-func (a addEkuiperTool) reconcile(ctx context.Context, r *EdgeController, instance *edgev1alpha1.NeuronEX) *requeue {
-	logger := log.WithValues("namespace", instance.Namespace, "instance", instance.Name, "reconciler",
+func (a addEkuiperTool) reconcile(ctx context.Context, r *EdgeController, ins *edgev1alpha1.NeuronEX) *requeue {
+	logger := log.WithValues("namespace", ins.Namespace, "instance", ins.Name, "reconciler",
 		"add eKuiper tool")
 
-	newConfigMap := internal.GetConfigMap(instance, internal.EKuiperToolConfig)
+	volume := getEkuiperToolCOnfigVol(ins)
+
+	cnfigMap := &corev1.ConfigMap{
+		ObjectMeta: internal.GetObjectMetadata(ins, volume.volumeSource.ConfigMap.Name),
+		Data: map[string]string{
+			"neuronStream.json": getekuiperToolConfig(),
+		},
+	}
 
 	existingConfigMap := &corev1.ConfigMap{}
-	if err := r.Get(ctx, client.ObjectKeyFromObject(&newConfigMap), existingConfigMap); err != nil {
+	if err := r.Get(ctx, client.ObjectKeyFromObject(cnfigMap), existingConfigMap); err != nil {
 		if !k8sErrors.IsNotFound(err) {
 			return &requeue{curError: err}
 		}
 
-		logger.Info("Creating ConfigMap", "name", newConfigMap.Name)
-		if err = r.create(ctx, instance, &newConfigMap); err != nil {
+		logger.Info("Creating ConfigMap", "name", cnfigMap.Name)
+		if err = r.create(ctx, ins, cnfigMap); err != nil {
 			return &requeue{curError: err}
 		}
 	}
 	return nil
+}
+
+func getekuiperToolConfig() string {
+	config := map[string]any{
+		"command": map[string]interface{}{
+			"url":         "/streams",
+			"description": "create neuronStream",
+			"method":      "post",
+			"data": map[string]string{
+				"sql": "create stream neuronStream() WITH (TYPE=\"neuron\",FORMAT=\"json\",SHARED=\"true\");",
+			},
+		},
+	}
+	res, _ := jsoniter.MarshalToString(config)
+	return res
 }
