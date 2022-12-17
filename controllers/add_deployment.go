@@ -122,9 +122,9 @@ func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
 		volume := corev1.Volume{
 			Name: vol.name,
 		}
-		if usePVC(ins) && !vol.useEmptyDir {
+		if ins.GetVolumeClaimTemplate() != nil && !vol.useEmptyDir {
 			volume.PersistentVolumeClaim = &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: internal.GetPvcName(ins, vol.name),
+				ClaimName: internal.GetResNameOnPanic(ins.GetVolumeClaimTemplate(), vol.name),
 			}
 		} else {
 			volume.VolumeSource = corev1.VolumeSource{
@@ -136,7 +136,16 @@ func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
 
 	if ins.GetComponentType() == edgev1alpha1.ComponentTypeNeuronEx {
 		cm := internal.ConfigMaps[internal.EKuiperToolConfig]
-		volumes = append(volumes, internal.GetVolume(ins, cm))
+		volumes = append(volumes, corev1.Volume{
+			Name: cm.MountName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: internal.GetResNameOnPanic(ins, cm.MapNameSuffix),
+					},
+				},
+			},
+		})
 	}
 	return
 }
