@@ -64,21 +64,7 @@ func (ec *EdgeController) reconcile(ctx context.Context, req ctrl.Request, cr cl
 		return ctrl.Result{}, err
 	}
 
-	if cr.GetDeletionTimestamp() != nil {
-		return ctrl.Result{}, nil
-	}
-
 	switch cr.(type) {
-	case *edgev1alpha1.NeuronEX:
-		subs := []subReconciler[*edgev1alpha1.NeuronEX]{
-			updateNeuronEXStatus{},
-			addEkuiperTool{},
-			addNeuronExPVC{},
-			addNeuronExDeploy{},
-			addNeuronExService{},
-			updateNeuronEXStatus{},
-		}
-		return subReconcile[*edgev1alpha1.NeuronEX](ec, ctx, cr, subs)
 	case *edgev1alpha1.EKuiper:
 		subs := []subReconciler[*edgev1alpha1.EKuiper]{
 			updateEkuiperStatus{},
@@ -98,7 +84,15 @@ func (ec *EdgeController) reconcile(ctx context.Context, req ctrl.Request, cr cl
 		}
 		return subReconcile[*edgev1alpha1.Neuron](ec, ctx, cr, subs)
 	default:
-		panic("unknown kind")
+		subs := []subReconciler[*edgev1alpha1.NeuronEX]{
+			updateNeuronEXStatus{},
+			addEkuiperTool{},
+			addNeuronExPVC{},
+			addNeuronExDeploy{},
+			addNeuronExService{},
+			updateNeuronEXStatus{},
+		}
+		return subReconcile[*edgev1alpha1.NeuronEX](ec, ctx, cr, subs)
 	}
 }
 
