@@ -200,6 +200,7 @@ var _ = Describe("EKuiper default webhook", func() {
 		Expect(got.GetVolumeClaimTemplate().Name).Should(Equal(got.GetResName()))
 		Expect(got.GetVolumeClaimTemplate().Namespace).Should(Equal(got.GetNamespace()))
 		Expect(got.GetVolumeClaimTemplate().Annotations).Should(Equal(got.GetAnnotations()))
-		Expect(got.GetServiceTemplate().Annotations).Should(Equal(got.GetAnnotations()))
+		Expect(got.GetVolumeClaimTemplate().Annotations).Should(Equal(got.GetAnnotations()))
+		Expect(got.GetVolumeClaimTemplate().Spec.AccessModes).Should(ConsistOf([]corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}))
 	})
 })

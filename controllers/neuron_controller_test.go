@@ -96,7 +96,6 @@ var _ = Describe("Neuron controller", func() {
 			new.Annotations["updated"] = "done"
 			new.Spec.VolumeClaimTemplate = &corev1.PersistentVolumeClaim{
 				Spec: corev1.PersistentVolumeClaimSpec{
-					AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{corev1.ResourceStorage: resource.MustParse("8Mi")},
 					},

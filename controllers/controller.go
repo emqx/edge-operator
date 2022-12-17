@@ -186,14 +186,11 @@ func (ec *EdgeController) update(ctx context.Context, owner, newObj, existingObj
 			newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
 	}
 
-	annotations := existingObj.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-	for key, value := range newObj.GetAnnotations() {
+	// annotation must not be nil, because it is set on line 179
+	annotations := newObj.GetAnnotations()
+	for key, value := range existingObj.GetAnnotations() {
 		annotations[key] = value
 	}
-
 	newObj.SetAnnotations(annotations)
 	newObj.SetResourceVersion(existingObj.GetResourceVersion())
 	newObj.SetCreationTimestamp(existingObj.GetCreationTimestamp())
