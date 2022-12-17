@@ -20,12 +20,8 @@ import (
 	"context"
 
 	appsv1 "k8s.io/api/apps/v1"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -63,15 +59,9 @@ func (r *EKuiperReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *EKuiperReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&edgev1alpha1.EKuiper{}).
-		Watches(
-			&source.Kind{Type: &appsv1.Deployment{}},
-			&handler.EnqueueRequestForOwner{OwnerType: &edgev1alpha1.EKuiper{}, IsController: true},
-			builder.WithPredicates(predicate.Funcs{
-				CreateFunc:  func(e event.CreateEvent) bool { return false },
-				UpdateFunc:  func(e event.UpdateEvent) bool { return true },
-				DeleteFunc:  func(e event.DeleteEvent) bool { return false },
-				GenericFunc: func(e event.GenericEvent) bool { return false },
-			}),
-		).
+		Owns(&appsv1.Deployment{}).
+		Owns(&corev1.Service{}).
+		Owns(&corev1.PersistentVolumeClaim{}).
+		Owns(&corev1.ConfigMap{}).
 		Complete(r)
 }
