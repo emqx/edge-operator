@@ -59,6 +59,36 @@ var _ = Describe("NeuronEX controller", func() {
 		Expect(k8sClient.Delete(ctx, ins.DeepCopy())).Should(Succeed())
 	})
 
+	It("check custom resources status", func() {
+		// envTest does not create pods via deployment, they need to be created manually
+		pod := &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: "fake-",
+				Namespace:    ins.GetNamespace(),
+				Labels:       ins.GetLabels(),
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{Name: "busybox", Image: "busybox"},
+				},
+			},
+		}
+		Expect(k8sClient.Create(ctx, pod)).Should(Succeed())
+		Eventually(func() corev1.PodPhase {
+			got := ins.DeepCopy()
+			_ = k8sClient.Get(ctx, client.ObjectKeyFromObject(got), got)
+			return got.Status.Phase
+		}, timeout, interval).Should(BeZero())
+
+		pod.Status.Phase = corev1.PodRunning
+		Expect(k8sClient.Status().Update(ctx, pod)).Should(Succeed())
+		Eventually(func() corev1.PodPhase {
+			got := ins.DeepCopy()
+			_ = k8sClient.Get(ctx, client.ObjectKeyFromObject(got), got)
+			return got.Status.Phase
+		}, timeout, interval).Should(Equal(corev1.PodRunning))
+	})
+
 	It("should create configMap", func() {
 		configMap := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
