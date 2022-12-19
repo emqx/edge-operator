@@ -159,10 +159,6 @@ func setDefaultVolume(ins EdgeInterface) {
 	vol.Namespace = ins.GetNamespace()
 	mergeLabels(vol, ins)
 	mergeAnnotations(vol, ins)
-
-	if len(vol.Spec.AccessModes) == 0 {
-		vol.Spec.AccessModes = append(vol.Spec.AccessModes, corev1.ReadWriteOnce)
-	}
 }
 
 func setDefaultService(ins EdgeInterface) {

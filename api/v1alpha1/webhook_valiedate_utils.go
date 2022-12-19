@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"errors"
+	"reflect"
 	"strings"
 )
 
@@ -32,6 +33,29 @@ func validateEKuiperContainer(ins EdgeInterface) error {
 
 	if !strings.HasSuffix(ekuiper.Image, "-slim-python") && !strings.HasSuffix(ekuiper.Image, "-slim") {
 		return errors.New("ekuiper container image must be slim or slim-python")
+	}
+	return nil
+}
+
+func validateVolumeTemplateCreate(ins EdgeInterface) error {
+	vol := ins.GetVolumeClaimTemplate()
+	if vol == nil {
+		return nil
+	}
+
+	if len(vol.Spec.AccessModes) == 0 {
+		return errors.New("volume template access modes is empty")
+	}
+	if vol.Spec.Resources.Limits.Storage().IsZero() && vol.Spec.Resources.Requests.Storage().IsZero() {
+		return errors.New("volume template resources storage is empty")
+	}
+
+	return nil
+}
+
+func validateVolumeTemplateUpdate(new, old EdgeInterface) error {
+	if !reflect.DeepEqual(new.GetVolumeClaimTemplate(), old.GetVolumeClaimTemplate()) {
+		return errors.New("volume template can not be updated")
 	}
 	return nil
 }
