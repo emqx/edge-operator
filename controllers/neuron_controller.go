@@ -21,13 +21,9 @@ import (
 
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // NeuronReconciler reconciles a NeuronEX object
@@ -61,15 +57,9 @@ func (r *NeuronReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 func (r *NeuronReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&edgev1alpha1.Neuron{}).
-		Watches(
-			&source.Kind{Type: &appsv1.Deployment{}},
-			&handler.EnqueueRequestForOwner{OwnerType: &edgev1alpha1.Neuron{}, IsController: true},
-			builder.WithPredicates(predicate.Funcs{
-				CreateFunc:  func(e event.CreateEvent) bool { return false },
-				UpdateFunc:  func(e event.UpdateEvent) bool { return true },
-				DeleteFunc:  func(e event.DeleteEvent) bool { return false },
-				GenericFunc: func(e event.GenericEvent) bool { return false },
-			}),
-		).
+		Owns(&appsv1.Deployment{}).
+		Owns(&corev1.Service{}).
+		Owns(&corev1.PersistentVolumeClaim{}).
+		Owns(&corev1.ConfigMap{}).
 		Complete(r)
 }
