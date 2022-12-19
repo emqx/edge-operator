@@ -26,6 +26,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -55,7 +58,7 @@ func TestAPIs(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	ctx, cancel = context.WithCancel(context.TODO())
-	timeout = time.Second * 10
+	timeout = time.Second * 15
 	interval = time.Millisecond * 250
 
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
@@ -104,3 +107,157 @@ var _ = AfterSuite(func() {
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
+
+func getNeuronEX() *edgev1alpha1.NeuronEX {
+	neuronEX := &edgev1alpha1.NeuronEX{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "neuronex",
+			Namespace: "default",
+			Labels: map[string]string{
+				"foo": "bar",
+			},
+			Annotations: map[string]string{
+				"foo": "bar",
+			},
+		},
+		Spec: edgev1alpha1.NeuronEXSpec{
+			Neuron: corev1.Container{
+				Name:  "neuron",
+				Image: "emqx/neuron:2.3",
+			},
+			EKuiper: corev1.Container{
+				Name:  "ekuiper",
+				Image: "lfedge/ekuiper:1.8-slim",
+			},
+		},
+	}
+	neuronEX.Default()
+	return neuronEX
+}
+
+func getNeuron() *edgev1alpha1.Neuron {
+	neuron := &edgev1alpha1.Neuron{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "neuron",
+			Namespace: "default",
+			Labels: map[string]string{
+				"foo": "bar",
+			},
+			Annotations: map[string]string{
+				"foo": "bar",
+			},
+		},
+		Spec: edgev1alpha1.NeuronSpec{
+			Neuron: corev1.Container{
+				Name:  "neuron",
+				Image: "emqx/neuron:2.3",
+			},
+		},
+	}
+	neuron.Default()
+	return neuron
+}
+
+func getEKuiper() *edgev1alpha1.EKuiper {
+	ekuiper := &edgev1alpha1.EKuiper{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ekuiper",
+			Namespace: "default",
+			Labels: map[string]string{
+				"foo": "bar",
+			},
+			Annotations: map[string]string{
+				"foo": "bar",
+			},
+		},
+		Spec: edgev1alpha1.EKuiperSpec{
+			EKuiper: corev1.Container{
+				Name:  "ekuiper",
+				Image: "lfedge/ekuiper:1.8-slim",
+			},
+		},
+	}
+	ekuiper.Default()
+	return ekuiper
+}
+
+func deepCopyEdgeEdgeInterface(ins edgev1alpha1.EdgeInterface) edgev1alpha1.EdgeInterface {
+	var got edgev1alpha1.EdgeInterface
+	switch resource := ins.(type) {
+	case *edgev1alpha1.NeuronEX:
+		got = resource.DeepCopy()
+	case *edgev1alpha1.Neuron:
+		got = resource.DeepCopy()
+	case *edgev1alpha1.EKuiper:
+		got = resource.DeepCopy()
+	default:
+		panic("unknown type")
+	}
+	return got
+}
+
+func addVolumeTemplate(ins edgev1alpha1.EdgeInterface) edgev1alpha1.EdgeInterface {
+	volumeTemplate := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				"e2e/test": "volumeTemplate",
+			},
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: resource.MustParse("8Mi"),
+				},
+			},
+		},
+	}
+	switch resource := ins.(type) {
+	case *edgev1alpha1.NeuronEX:
+		new := resource.DeepCopy()
+		new.Spec.VolumeClaimTemplate = volumeTemplate
+		new.Default()
+		return new
+	case *edgev1alpha1.Neuron:
+		new := resource.DeepCopy()
+		new.Spec.VolumeClaimTemplate = volumeTemplate
+		new.Default()
+		return new
+	case *edgev1alpha1.EKuiper:
+		new := resource.DeepCopy()
+		new.Spec.VolumeClaimTemplate = volumeTemplate
+		new.Default()
+		return new
+	default:
+		panic("unknown type")
+	}
+}
+
+func addServiceTemplate(ins edgev1alpha1.EdgeInterface) edgev1alpha1.EdgeInterface {
+	serviceTemplate := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				"e2e/test": "serviceTemplate",
+			},
+		},
+	}
+	switch resource := ins.(type) {
+	case *edgev1alpha1.NeuronEX:
+		new := resource.DeepCopy()
+		new.Spec.ServiceTemplate = serviceTemplate
+		new.Default()
+		return new
+	case *edgev1alpha1.Neuron:
+		new := resource.DeepCopy()
+		new.Spec.ServiceTemplate = serviceTemplate
+		new.Default()
+		return new
+	case *edgev1alpha1.EKuiper:
+		new := resource.DeepCopy()
+		new.Spec.ServiceTemplate = serviceTemplate
+		new.Default()
+		return new
+	default:
+		panic("unknown type")
+	}
+}
