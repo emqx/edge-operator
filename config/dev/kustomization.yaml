@@ -1,10 +1,13 @@
 resources:
-  - ../default
+  - ../crd
+  - ../rbac
+  - ../manager
+  - ../webhook
 
 patches:
   - patch: |
-      - op: "add" 
-        path: "/webhooks/0/clientConfig/url" 
+      - op: "add"
+        path: "/webhooks/0/clientConfig/url"
         value: "https://host.docker.internal:9443/mutate-edge-emqx-io-v1alpha1-ekuiper"
       - op: "remove"
         path: "/webhooks/0/clientConfig/service"
@@ -36,7 +39,7 @@ patches:
           NWgwUCtOM2wKYXluOG9mcDBFdFJaTHlRSlZQdTNWYTJWaFE0QVdaMklVZ2UvRWExNlpPUjREL3pa
           MW5ZMG9wb3RiRzdTNFE2VApDV0g3eGljRVlGdmhsVFREVlFGU1JMdz0KLS0tLS1FTkQgQ0VSVElG
           SUNBVEUtLS0tLQo=
-      
+
       - op: "add"
         path: "/webhooks/1/clientConfig/url"
         value: "https://host.docker.internal:9443/mutate-edge-emqx-io-v1alpha1-neuron"
@@ -70,7 +73,7 @@ patches:
           NWgwUCtOM2wKYXluOG9mcDBFdFJaTHlRSlZQdTNWYTJWaFE0QVdaMklVZ2UvRWExNlpPUjREL3pa
           MW5ZMG9wb3RiRzdTNFE2VApDV0g3eGljRVlGdmhsVFREVlFGU1JMdz0KLS0tLS1FTkQgQ0VSVElG
           SUNBVEUtLS0tLQo=
-      
+
       - op: "add"
         path: "/webhooks/2/clientConfig/url"
         value: "https://host.docker.internal:9443/mutate-edge-emqx-io-v1alpha1-neuronex"
@@ -108,8 +111,8 @@ patches:
     target:
       kind: MutatingWebhookConfiguration
   - patch: |
-      - op: "add" 
-        path: "/webhooks/0/clientConfig/url" 
+      - op: "add"
+        path: "/webhooks/0/clientConfig/url"
         value: "https://host.docker.internal:9443/validate-edge-emqx-io-v1alpha1-ekuiper"
       - op: "remove"
         path: "/webhooks/0/clientConfig/service"
@@ -141,7 +144,7 @@ patches:
           NWgwUCtOM2wKYXluOG9mcDBFdFJaTHlRSlZQdTNWYTJWaFE0QVdaMklVZ2UvRWExNlpPUjREL3pa
           MW5ZMG9wb3RiRzdTNFE2VApDV0g3eGljRVlGdmhsVFREVlFGU1JMdz0KLS0tLS1FTkQgQ0VSVElG
           SUNBVEUtLS0tLQo=
-      
+
 
       - op: "add"
         path: "/webhooks/1/clientConfig/url"
@@ -176,7 +179,7 @@ patches:
           NWgwUCtOM2wKYXluOG9mcDBFdFJaTHlRSlZQdTNWYTJWaFE0QVdaMklVZ2UvRWExNlpPUjREL3pa
           MW5ZMG9wb3RiRzdTNFE2VApDV0g3eGljRVlGdmhsVFREVlFGU1JMdz0KLS0tLS1FTkQgQ0VSVElG
           SUNBVEUtLS0tLQo=
-      
+
       - op: "add"
         path: "/webhooks/2/clientConfig/url"
         value: "https://host.docker.internal:9443/validate-edge-emqx-io-v1alpha1-neuronex"
