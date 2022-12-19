@@ -60,12 +60,16 @@ var _ webhook.Validator = &Neuron{}
 func (r *Neuron) ValidateCreate() error {
 	neuronlog.Info("validate create", "name", r.Name)
 
-	if err := validateNeuronContainer(r); err != nil {
-		neuronlog.Error(err, "validate neuron container failed")
-		return err
+	for _, err := range []error{
+		validateNeuronContainer(r),
+		validateVolumeTemplateCreate(r),
+	} {
+		if err != nil {
+			neuronexlog.Error(err, "validate neuron container failed")
+			return err
+		}
 	}
 
-	neuronexlog.Info("validate create success", "name", r.Name)
 	return nil
 }
 
@@ -73,9 +77,14 @@ func (r *Neuron) ValidateCreate() error {
 func (r *Neuron) ValidateUpdate(old runtime.Object) error {
 	neuronlog.Info("validate update", "name", r.Name)
 
-	if err := validateNeuronContainer(r); err != nil {
-		neuronlog.Error(err, "validate neuron container failed")
-		return err
+	for _, err := range []error{
+		validateNeuronContainer(r),
+		validateVolumeTemplateUpdate(r, old.(*Neuron)),
+	} {
+		if err != nil {
+			neuronexlog.Error(err, "validate neuron container failed")
+			return err
+		}
 	}
 
 	neuronexlog.Info("validate create success", "name", r.Name)

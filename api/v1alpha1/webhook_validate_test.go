@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -23,8 +24,6 @@ func TestValiedate(t *testing.T) {
 					Name:  "ekuiper",
 					Image: "lfedge/ekuiper:latest-slim",
 				},
-				ServiceTemplate:     &corev1.Service{},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{},
 			},
 		},
 		&Neuron{
@@ -36,8 +35,6 @@ func TestValiedate(t *testing.T) {
 					Name:  "neuron",
 					Image: "emqx/neuron:latest",
 				},
-				ServiceTemplate:     &corev1.Service{},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{},
 			},
 		},
 		&EKuiper{
@@ -49,8 +46,6 @@ func TestValiedate(t *testing.T) {
 					Name:  "ekuiper",
 					Image: "lfedge/ekuiper:latest-slim",
 				},
-				ServiceTemplate:     &corev1.Service{},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{},
 			},
 		},
 	} {
@@ -95,6 +90,55 @@ func TestValiedate(t *testing.T) {
 				assert.ErrorContains(t, got.ValidateCreate(), "ekuiper container image must be slim or slim-python")
 				assert.ErrorContains(t, got.ValidateUpdate(ins), "ekuiper container image must be slim or slim-python")
 			}
+		})
+		t.Run("check volume template is empty", func(t *testing.T) {
+			got := deepCopyEdgeEdgeInterface(ins)
+			got.SetVolumeClaimTemplate(nil)
+			assert.Nil(t, got.ValidateCreate())
+
+			got.SetVolumeClaimTemplate(&corev1.PersistentVolumeClaimTemplate{})
+			assert.ErrorContains(t, got.ValidateCreate(), "volume template access modes is empty")
+
+			got.SetVolumeClaimTemplate(&corev1.PersistentVolumeClaimTemplate{
+				Spec: corev1.PersistentVolumeClaimSpec{
+					AccessModes: []corev1.PersistentVolumeAccessMode{
+						corev1.ReadWriteOnce,
+					},
+				},
+			})
+			assert.ErrorContains(t, got.ValidateCreate(), "volume template resources storage is empty")
+
+			got.SetVolumeClaimTemplate(&corev1.PersistentVolumeClaimTemplate{
+				Spec: corev1.PersistentVolumeClaimSpec{
+					AccessModes: []corev1.PersistentVolumeAccessMode{
+						corev1.ReadWriteOnce,
+					},
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceStorage: resource.MustParse("8Mi"),
+						},
+					},
+				},
+			})
+			assert.Nil(t, got.ValidateCreate())
+		})
+		t.Run("check volume template can not be updated", func(t *testing.T) {
+			got := deepCopyEdgeEdgeInterface(ins)
+			assert.Nil(t, got.ValidateUpdate(ins))
+
+			got.SetVolumeClaimTemplate(&corev1.PersistentVolumeClaimTemplate{
+				Spec: corev1.PersistentVolumeClaimSpec{
+					AccessModes: []corev1.PersistentVolumeAccessMode{
+						corev1.ReadWriteOnce,
+					},
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceStorage: resource.MustParse("8Mi"),
+						},
+					},
+				},
+			})
+			assert.ErrorContains(t, got.ValidateUpdate(ins), "volume template can not be updated")
 		})
 	}
 }

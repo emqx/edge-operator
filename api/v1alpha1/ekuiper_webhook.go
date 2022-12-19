@@ -59,12 +59,16 @@ var _ webhook.Validator = &EKuiper{}
 func (r *EKuiper) ValidateCreate() error {
 	ekuiperlog.Info("validate create", "name", r.Name)
 
-	if err := validateEKuiperContainer(r); err != nil {
-		neuronexlog.Error(err, "validate ekuiper container failed")
-		return err
+	for _, err := range []error{
+		validateEKuiperContainer(r),
+		validateVolumeTemplateCreate(r),
+	} {
+		if err != nil {
+			neuronexlog.Error(err, "validate neuron container failed")
+			return err
+		}
 	}
 
-	ekuiperlog.Info("validate create success", "name", r.Name)
 	return nil
 }
 
@@ -72,9 +76,14 @@ func (r *EKuiper) ValidateCreate() error {
 func (r *EKuiper) ValidateUpdate(old runtime.Object) error {
 	ekuiperlog.Info("validate update", "name", r.Name)
 
-	if err := validateEKuiperContainer(r); err != nil {
-		neuronexlog.Error(err, "validate ekuiper container failed")
-		return err
+	for _, err := range []error{
+		validateEKuiperContainer(r),
+		validateVolumeTemplateUpdate(r, old.(*EKuiper)),
+	} {
+		if err != nil {
+			neuronexlog.Error(err, "validate neuron container failed")
+			return err
+		}
 	}
 
 	ekuiperlog.Info("validate update success", "name", r.Name)
