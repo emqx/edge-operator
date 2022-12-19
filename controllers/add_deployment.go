@@ -115,12 +115,6 @@ func getPodSpec(instance edgev1alpha1.EdgeInterface) corev1.PodSpec {
 	return *podSpec
 }
 
-func getVolumes(ins edgev1alpha1.EdgeInterface) (volumes []corev1.Volume) {
-	volumes = make([]corev1.Volume, 0)
-
-	return
-}
-
 func getNeuronContainer(ins edgev1alpha1.EdgeInterface, vols ...volumeInfo) corev1.Container {
 	container := ins.GetNeuron().DeepCopy()
 	for i := range vols {
@@ -156,7 +150,10 @@ func getEkuiperToolContainer(ins edgev1alpha1.EdgeInterface, vols ...volumeInfo)
 
 	i := strings.Split(ins.GetEKuiper().Image, ":")
 	registry := filepath.Dir(i[0])
-	version := compile.FindString(i[1]) // if not match, version = ""
+	version := "latest"
+	if compile.MatchString(i[1]) {
+		version = compile.FindString(i[1])
+	}
 
 	container := corev1.Container{
 		Name:            "ekuiper-tool",
