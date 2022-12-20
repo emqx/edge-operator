@@ -9,10 +9,6 @@ import (
 func validateNeuronContainer(ins EdgeInterface) error {
 	neuron := ins.GetNeuron()
 
-	if neuron.Name == "" {
-		return errors.New("neuron container name is empty")
-	}
-
 	if neuron.Image == "" {
 		return errors.New("neuron container image is empty")
 	}
@@ -22,10 +18,6 @@ func validateNeuronContainer(ins EdgeInterface) error {
 
 func validateEKuiperContainer(ins EdgeInterface) error {
 	ekuiper := ins.GetEKuiper()
-
-	if ekuiper.Name == "" {
-		return errors.New("ekuiper container name is empty")
-	}
 
 	if ekuiper.Image == "" {
 		return errors.New("ekuiper container image is empty")

@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/created-by: edge-operator
   name: neuronex-sample
 spec:
-  volumeClaimTemplate:
+  volumeClaimTemplate: ## optional
     metadata:
       name: neuronex-sample
       namespace: default
@@ -25,6 +25,32 @@ spec:
   neuron:
     name: neuron
     image: emqx/neuron:2.3.0
+    imagePullPolicy: IfNotPresent ## optional
+    readinessProbe:  ## optional
+      httpGet:
+        path: "/"
+        port: 7000
+        scheme: HTTP
+      initialDelaySeconds: 10
+      timeoutSeconds: 1
+      periodSeconds: 5
+      successThreshold: 1
+      failureThreshold: 12
+    terminationMessagePath: /dev/termination-log ## optional
+    terminationMessagePolicy: File ## optional
   ekuiper:
     name: ekuiper
     image: lfedge/ekuiper:1.7-slim-python
+    imagePullPolicy: IfNotPresent ## optional
+    livenessProbe:  ## optional
+      httpGet:
+        path: ""
+        port: 9081
+        scheme: HTTP
+      initialDelaySeconds: 10
+      timeoutSeconds: 1
+      periodSeconds: 5
+      successThreshold: 1
+      failureThreshold: 12
+    terminationMessagePath: /dev/termination-log ## optional
+    terminationMessagePolicy: File ## optional

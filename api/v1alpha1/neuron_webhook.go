@@ -43,12 +43,9 @@ func (r *Neuron) Default() {
 	neuronlog.Info("Set default value", "name", r.Name)
 
 	setDefaultLabels(r)
-	mergeEnv(r.GetNeuron(), &defNeuron)
-	mergeContainerPorts(r.GetNeuron(), &defNeuron)
+	setDefaultNeuronContainer(r)
 	setDefaultService(r)
 	setDefaultVolume(r)
-
-	setDefaultNeuronProbe(r)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
