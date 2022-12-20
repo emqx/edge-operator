@@ -30,8 +30,8 @@ type EdgeInterface interface {
 	GetNeuron() *corev1.Container
 	GetEKuiper() *corev1.Container
 
-	GetVolumeClaimTemplate() *corev1.PersistentVolumeClaim
-	SetVolumeClaimTemplate(*corev1.PersistentVolumeClaim)
+	GetVolumeClaimTemplate() *corev1.PersistentVolumeClaimTemplate
+	SetVolumeClaimTemplate(*corev1.PersistentVolumeClaimTemplate)
 
 	GetServiceTemplate() *corev1.Service
 	SetServiceTemplate(*corev1.Service)

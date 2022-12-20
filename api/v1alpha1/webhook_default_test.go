@@ -23,7 +23,7 @@ func TestDefault(t *testing.T) {
 					Name: "ekuiper",
 				},
 				ServiceTemplate:     &corev1.Service{},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
+				VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{},
 			},
 		},
 		&Neuron{
@@ -35,7 +35,7 @@ func TestDefault(t *testing.T) {
 					Name: "neuron",
 				},
 				ServiceTemplate:     &corev1.Service{},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
+				VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{},
 			},
 		},
 		&EKuiper{
@@ -47,7 +47,7 @@ func TestDefault(t *testing.T) {
 					Name: "ekuiper",
 				},
 				ServiceTemplate:     &corev1.Service{},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
+				VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{},
 			},
 		},
 	} {
@@ -235,7 +235,7 @@ func TestDefault(t *testing.T) {
 
 			got.SetLabels(map[string]string{"foo": "bar"})
 			got.SetAnnotations(map[string]string{"foo": "bar"})
-			got.SetVolumeClaimTemplate(&corev1.PersistentVolumeClaim{
+			got.SetVolumeClaimTemplate(&corev1.PersistentVolumeClaimTemplate{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      map[string]string{"test": "fake"},
 					Annotations: map[string]string{"test": "fake"},

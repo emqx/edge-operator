@@ -24,7 +24,7 @@ func TestValiedate(t *testing.T) {
 					Image: "lfedge/ekuiper:latest-slim",
 				},
 				ServiceTemplate:     &corev1.Service{},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
+				VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{},
 			},
 		},
 		&Neuron{
@@ -37,7 +37,7 @@ func TestValiedate(t *testing.T) {
 					Image: "emqx/neuron:latest",
 				},
 				ServiceTemplate:     &corev1.Service{},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
+				VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{},
 			},
 		},
 		&EKuiper{
@@ -50,7 +50,7 @@ func TestValiedate(t *testing.T) {
 					Image: "lfedge/ekuiper:latest-slim",
 				},
 				ServiceTemplate:     &corev1.Service{},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
+				VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{},
 			},
 		},
 	} {

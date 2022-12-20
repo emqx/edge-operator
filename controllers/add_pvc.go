@@ -55,9 +55,11 @@ func addPVC(ctx context.Context, r *EdgeController, ins edgev1alpha1.EdgeInterfa
 		if vols[i].volumeSource.PersistentVolumeClaim == nil {
 			continue
 		}
-		pvc := ins.GetVolumeClaimTemplate().DeepCopy()
-		pvc.ObjectMeta = internal.GetObjectMetadata(pvc, internal.GetResNameOnPanic(pvc, vols[i].name))
-		pvc.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("PersistentVolumeClaim"))
+		pvc := &corev1.PersistentVolumeClaim{
+			ObjectMeta: internal.GetObjectMetadata(ins.GetVolumeClaimTemplate(), internal.GetResNameOnPanic(ins.GetVolumeClaimTemplate(), vols[i].name)),
+			Spec:       ins.GetVolumeClaimTemplate().Spec,
+		}
+		pvc.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("PersistentVolumeClaimTemplate"))
 
 		existingPVC := &corev1.PersistentVolumeClaim{}
 		err := r.Get(ctx, client.ObjectKeyFromObject(pvc), existingPVC)

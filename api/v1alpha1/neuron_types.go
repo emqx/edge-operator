@@ -32,8 +32,8 @@ type NeuronSpec struct {
 
 	Neuron corev1.Container `json:"neuron,omitempty"`
 
-	ServiceTemplate     *corev1.Service               `json:"serviceTemplate,omitempty"`
-	VolumeClaimTemplate *corev1.PersistentVolumeClaim `json:"volumeClaimTemplate,omitempty"`
+	ServiceTemplate     *corev1.Service                       `json:"serviceTemplate,omitempty"`
+	VolumeClaimTemplate *corev1.PersistentVolumeClaimTemplate `json:"volumeClaimTemplate,omitempty"`
 }
 
 func (n *Neuron) GetComponentType() ComponentType {
@@ -56,10 +56,10 @@ func (n *Neuron) GetEKuiper() *corev1.Container {
 	return nil
 }
 
-func (n *Neuron) GetVolumeClaimTemplate() *corev1.PersistentVolumeClaim {
+func (n *Neuron) GetVolumeClaimTemplate() *corev1.PersistentVolumeClaimTemplate {
 	return n.Spec.VolumeClaimTemplate
 }
-func (n *Neuron) SetVolumeClaimTemplate(pvc *corev1.PersistentVolumeClaim) {
+func (n *Neuron) SetVolumeClaimTemplate(pvc *corev1.PersistentVolumeClaimTemplate) {
 	n.Spec.VolumeClaimTemplate = pvc
 }
 
