@@ -59,17 +59,18 @@ func setDefaultLabels(ins EdgeInterface) {
 // mergeEnv adds environment variables to an existing environment, unless
 // environment variables with the same name are already present.
 func mergeEnv(target, desired *corev1.Container) {
-	existingVars := make(map[string]struct{}, len(target.Env))
+	envs := append(target.Env, desired.Env...)
+	result := make([]corev1.EnvVar, 0, len(envs))
+	temp := map[string]struct{}{}
 
-	for _, envVar := range target.Env {
-		existingVars[envVar.Name] = struct{}{}
-	}
-
-	for _, envVar := range desired.Env {
-		if _, ok := existingVars[envVar.Name]; !ok {
-			target.Env = append(target.Env, envVar)
+	for _, item := range envs {
+		if _, ok := temp[item.Name]; !ok {
+			temp[item.Name] = struct{}{}
+			result = append(result, item)
 		}
 	}
+
+	target.Env = result
 }
 
 // mergeLabels merges the labels specified by the operator into
@@ -230,28 +231,34 @@ func setDefaultNeuronProbe(ins EdgeInterface) {
 	neuron := ins.GetNeuron()
 	if neuron.ReadinessProbe == nil {
 		neuron.ReadinessProbe = &corev1.Probe{
-			InitialDelaySeconds: 10,
-			PeriodSeconds:       5,
-			FailureThreshold:    12,
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path: "",
-					Port: intstr.FromInt(7000),
+					Path:   "",
+					Port:   intstr.FromInt(7000),
+					Scheme: corev1.URISchemeHTTP,
 				},
 			},
+			InitialDelaySeconds: 10,
+			TimeoutSeconds:      1,
+			PeriodSeconds:       5,
+			SuccessThreshold:    1,
+			FailureThreshold:    12,
 		}
 	}
 	if neuron.LivenessProbe == nil {
 		neuron.LivenessProbe = &corev1.Probe{
-			InitialDelaySeconds: 10,
-			PeriodSeconds:       5,
-			FailureThreshold:    12,
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path: "",
-					Port: intstr.FromInt(7000),
+					Path:   "",
+					Port:   intstr.FromInt(7000),
+					Scheme: corev1.URISchemeHTTP,
 				},
 			},
+			InitialDelaySeconds: 10,
+			TimeoutSeconds:      1,
+			PeriodSeconds:       5,
+			SuccessThreshold:    1,
+			FailureThreshold:    12,
 		}
 	}
 }
@@ -267,28 +274,34 @@ func setDefaultEKuiperProbe(ins EdgeInterface) {
 
 	if ekuiper.ReadinessProbe == nil {
 		ekuiper.ReadinessProbe = &corev1.Probe{
-			InitialDelaySeconds: 10,
-			PeriodSeconds:       5,
-			FailureThreshold:    12,
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path: "",
-					Port: port,
+					Path:   "",
+					Port:   port,
+					Scheme: corev1.URISchemeHTTP,
 				},
 			},
+			InitialDelaySeconds: 10,
+			TimeoutSeconds:      1,
+			PeriodSeconds:       5,
+			SuccessThreshold:    1,
+			FailureThreshold:    12,
 		}
 	}
 	if ekuiper.LivenessProbe == nil {
 		ekuiper.LivenessProbe = &corev1.Probe{
-			InitialDelaySeconds: 10,
-			PeriodSeconds:       5,
-			FailureThreshold:    12,
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path: "",
-					Port: port,
+					Path:   "",
+					Port:   port,
+					Scheme: corev1.URISchemeHTTP,
 				},
 			},
+			InitialDelaySeconds: 10,
+			TimeoutSeconds:      1,
+			PeriodSeconds:       5,
+			SuccessThreshold:    1,
+			FailureThreshold:    12,
 		}
 	}
 }

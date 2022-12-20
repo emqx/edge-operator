@@ -47,9 +47,6 @@ func (n *Neuron) GetResName() string {
 func (n *Neuron) GetEdgePodSpec() EdgePodSpec {
 	return n.Spec.EdgePodSpec
 }
-func (n *Neuron) SetEdgePodSpec(spec EdgePodSpec) {
-	n.Spec.EdgePodSpec = spec
-}
 
 func (n *Neuron) GetNeuron() *corev1.Container {
 	return &n.Spec.Neuron
