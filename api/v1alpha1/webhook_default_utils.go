@@ -182,7 +182,7 @@ func setDefaultService(ins EdgeInterface) {
 	svc.Spec.Selector = mergeMap(svc.Spec.Selector, ins.GetLabels())
 
 	var sPorts []corev1.ServicePort
-	appendPort := func(cPorts []corev1.ContainerPort) {
+	transPort := func(cPorts []corev1.ContainerPort) {
 		for i := range cPorts {
 			sPorts = append(sPorts, corev1.ServicePort{
 				Name:       cPorts[i].Name,
@@ -195,33 +195,29 @@ func setDefaultService(ins EdgeInterface) {
 
 	eKuiper := ins.GetEKuiper()
 	if eKuiper != nil {
-		appendPort(eKuiper.Ports)
+		transPort(eKuiper.Ports)
 	}
 
 	neuron := ins.GetNeuron()
 	if neuron != nil {
-		appendPort(neuron.Ports)
+		transPort(neuron.Ports)
 	}
 
 	mergeServicePort(svc, sPorts)
 }
 
 func mergeServicePort(svc *corev1.Service, required []corev1.ServicePort) {
-	target := svc.Spec.Ports
-	for i := range required {
-		found := false
-		for j := range target {
-			if target[j].Name == required[i].Name {
-				found = true
-				break
-			}
-		}
+	ports := append(svc.Spec.Ports, required...)
+	result := make([]corev1.ServicePort, 0, len(ports))
+	temp := map[string]struct{}{}
 
-		if !found {
-			target = append(target, *required[i].DeepCopy())
+	for _, item := range ports {
+		if _, ok := temp[item.Name]; !ok {
+			temp[item.Name] = struct{}{}
+			result = append(result, item)
 		}
 	}
-	svc.Spec.Ports = target
+	svc.Spec.Ports = result
 }
 
 func setDefaultNeuronProbe(ins EdgeInterface) {

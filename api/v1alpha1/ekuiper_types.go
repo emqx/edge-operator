@@ -57,9 +57,15 @@ func (ek *EKuiper) GetEKuiper() *corev1.Container {
 func (ek *EKuiper) GetVolumeClaimTemplate() *corev1.PersistentVolumeClaim {
 	return ek.Spec.VolumeClaimTemplate
 }
+func (ek *EKuiper) SetVolumeClaimTemplate(pvc *corev1.PersistentVolumeClaim) {
+	ek.Spec.VolumeClaimTemplate = pvc
+}
 
 func (ek *EKuiper) GetServiceTemplate() *corev1.Service {
 	return ek.Spec.ServiceTemplate
+}
+func (ek *EKuiper) SetServiceTemplate(svc *corev1.Service) {
+	ek.Spec.ServiceTemplate = svc
 }
 
 // EKuiperStatus defines the observed state of EKuiper
