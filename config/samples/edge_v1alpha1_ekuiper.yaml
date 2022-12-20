@@ -16,7 +16,7 @@ spec:
     readinessProbe:  ## optional
       httpGet:
         path: "/"
-        port: 7000
+        port: 9081
         scheme: HTTP
       initialDelaySeconds: 10
       timeoutSeconds: 1
