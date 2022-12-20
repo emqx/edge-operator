@@ -36,8 +36,8 @@ jobs:
         context: .
     - id: generate_yaml
       run: |
-        pushd config/manager && ./bin/kustomize edit set image controller="${{ github.repository_owner }}/edge-operator-controller:${{ github.ref_name }}" && popd
-        ./bin/kustomize build config/default > edge-operator.yaml
+        pushd config/manager && kustomize edit set image controller="${{ github.repository_owner }}/edge-operator-controller:${{ github.ref_name }}" && popd
+        kustomize build config/default > edge-operator.yaml
         echo "file=edge-operator.yaml" >> $GITHUB_OUTPUT
     - id: prerelease
       run: |
