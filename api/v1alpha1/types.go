@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -16,6 +17,11 @@ const (
 // +kubebuilder:object:generate=false
 type EdgeInterface interface {
 	client.Object
+
+	Default()
+	ValidateCreate() error
+	ValidateUpdate(runtime.Object) error
+	ValidateDelete() error
 
 	GetComponentType() ComponentType
 	GetResName() string
