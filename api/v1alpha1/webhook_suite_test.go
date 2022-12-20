@@ -136,7 +136,3 @@ var _ = AfterSuite(func() {
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
-
-func matchError(ins EdgeInterface, message string) string {
-	return fmt.Sprintf("admission webhook \"validate.%s.edge.emqx.io\" denied the request: %s", ins.GetComponentType(), message)
-}

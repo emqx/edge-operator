@@ -59,9 +59,15 @@ func (n *Neuron) GetEKuiper() *corev1.Container {
 func (n *Neuron) GetVolumeClaimTemplate() *corev1.PersistentVolumeClaim {
 	return n.Spec.VolumeClaimTemplate
 }
+func (n *Neuron) SetVolumeClaimTemplate(pvc *corev1.PersistentVolumeClaim) {
+	n.Spec.VolumeClaimTemplate = pvc
+}
 
 func (n *Neuron) GetServiceTemplate() *corev1.Service {
 	return n.Spec.ServiceTemplate
+}
+func (n *Neuron) SetServiceTemplate(svc *corev1.Service) {
+	n.Spec.ServiceTemplate = svc
 }
 
 // NeuronStatus defines the observed state of Neuron

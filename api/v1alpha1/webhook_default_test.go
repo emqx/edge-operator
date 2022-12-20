@@ -22,8 +22,8 @@ func TestDefault(t *testing.T) {
 				EKuiper: corev1.Container{
 					Name: "ekuiper",
 				},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
 				ServiceTemplate:     &corev1.Service{},
+				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
 			},
 		},
 		&Neuron{
@@ -34,8 +34,8 @@ func TestDefault(t *testing.T) {
 				Neuron: corev1.Container{
 					Name: "neuron",
 				},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
 				ServiceTemplate:     &corev1.Service{},
+				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
 			},
 		},
 		&EKuiper{
@@ -46,8 +46,8 @@ func TestDefault(t *testing.T) {
 				EKuiper: corev1.Container{
 					Name: "ekuiper",
 				},
-				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
 				ServiceTemplate:     &corev1.Service{},
+				VolumeClaimTemplate: &corev1.PersistentVolumeClaim{},
 			},
 		},
 	} {
@@ -227,11 +227,23 @@ func TestDefault(t *testing.T) {
 				assert.Equal(t, 9082, got.GetEKuiper().ReadinessProbe.HTTPGet.Port.IntValue())
 			}
 		})
-		t.Run("check volume template labels", func(t *testing.T) {
+		t.Run("check volume template metadata", func(t *testing.T) {
 			got := deepCopyEdgeEdgeInterface(ins)
-			got.SetLabels(map[string]string{"foo": "bar"})
-			got.GetVolumeClaimTemplate().SetLabels(map[string]string{"test": "fake"})
+			got.SetVolumeClaimTemplate(nil)
 			got.Default()
+			assert.Nil(t, got.GetVolumeClaimTemplate())
+
+			got.SetLabels(map[string]string{"foo": "bar"})
+			got.SetAnnotations(map[string]string{"foo": "bar"})
+			got.SetVolumeClaimTemplate(&corev1.PersistentVolumeClaim{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:      map[string]string{"test": "fake"},
+					Annotations: map[string]string{"test": "fake"},
+				},
+			})
+			got.Default()
+			assert.Equal(t, got.GetResName(), got.GetVolumeClaimTemplate().Name)
+			assert.Equal(t, got.GetNamespace(), got.GetVolumeClaimTemplate().Namespace)
 			assert.Equal(t, map[string]string{
 				"foo":        "bar",
 				"test":       "fake",
@@ -239,22 +251,28 @@ func TestDefault(t *testing.T) {
 				InstanceKey:  got.GetName(),
 				ComponentKey: string(got.GetComponentType()),
 			}, got.GetVolumeClaimTemplate().Labels)
-		})
-		t.Run("check volume template annotations", func(t *testing.T) {
-			got := deepCopyEdgeEdgeInterface(ins)
-			got.SetAnnotations(map[string]string{"foo": "bar"})
-			got.GetVolumeClaimTemplate().SetAnnotations(map[string]string{"test": "fake"})
-			got.Default()
 			assert.Equal(t, map[string]string{
 				"foo":  "bar",
 				"test": "fake",
 			}, got.GetVolumeClaimTemplate().Annotations)
 		})
-		t.Run("check service template labels", func(t *testing.T) {
+		t.Run("check service template metadata", func(t *testing.T) {
 			got := deepCopyEdgeEdgeInterface(ins)
-			got.SetLabels(map[string]string{"foo": "bar"})
-			got.GetServiceTemplate().SetLabels(map[string]string{"test": "fake"})
+			got.SetServiceTemplate(nil)
 			got.Default()
+			assert.Nil(t, got.GetServiceTemplate())
+
+			got.SetLabels(map[string]string{"foo": "bar"})
+			got.SetAnnotations(map[string]string{"foo": "bar"})
+			got.SetServiceTemplate(&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:      map[string]string{"test": "fake"},
+					Annotations: map[string]string{"test": "fake"},
+				},
+			})
+			got.Default()
+			assert.Equal(t, got.GetResName(), got.GetServiceTemplate().Name)
+			assert.Equal(t, got.GetNamespace(), got.GetServiceTemplate().Namespace)
 			assert.Equal(t, map[string]string{
 				"foo":        "bar",
 				"test":       "fake",
@@ -262,16 +280,81 @@ func TestDefault(t *testing.T) {
 				InstanceKey:  got.GetName(),
 				ComponentKey: string(got.GetComponentType()),
 			}, got.GetServiceTemplate().Labels)
-		})
-		t.Run("check service template annotations", func(t *testing.T) {
-			got := deepCopyEdgeEdgeInterface(ins)
-			got.SetAnnotations(map[string]string{"foo": "bar"})
-			got.GetServiceTemplate().SetAnnotations(map[string]string{"test": "fake"})
-			got.Default()
 			assert.Equal(t, map[string]string{
 				"foo":  "bar",
 				"test": "fake",
 			}, got.GetServiceTemplate().Annotations)
+		})
+		t.Run("check service template spec", func(t *testing.T) {
+			if ins.GetNeuron() != nil {
+				got := deepCopyEdgeEdgeInterface(ins)
+				got.SetServiceTemplate(&corev1.Service{})
+				got.Default()
+				assert.Subset(t, got.GetServiceTemplate().Spec.Ports, []corev1.ServicePort{
+					{
+						Name:       "neuron",
+						Protocol:   corev1.ProtocolTCP,
+						Port:       7000,
+						TargetPort: intstr.Parse("7000"),
+					},
+				})
+
+				got.SetServiceTemplate(&corev1.Service{
+					Spec: corev1.ServiceSpec{
+						Ports: []corev1.ServicePort{
+							{
+								Name:       "neuron",
+								Protocol:   corev1.ProtocolTCP,
+								Port:       7001,
+								TargetPort: intstr.Parse("7001"),
+							},
+						},
+					},
+				})
+				got.Default()
+				assert.Subset(t, got.GetServiceTemplate().Spec.Ports, []corev1.ServicePort{
+					{
+						Name:       "neuron",
+						Protocol:   corev1.ProtocolTCP,
+						Port:       7001,
+						TargetPort: intstr.Parse("7001"),
+					},
+				})
+			}
+			if ins.GetEKuiper() != nil {
+				got := deepCopyEdgeEdgeInterface(ins)
+				got.SetServiceTemplate(&corev1.Service{})
+				got.Default()
+				assert.Subset(t, got.GetServiceTemplate().Spec.Ports, []corev1.ServicePort{
+					{
+						Name:       "ekuiper",
+						Protocol:   corev1.ProtocolTCP,
+						Port:       9081,
+						TargetPort: intstr.Parse("9081"),
+					},
+				})
+				got.SetServiceTemplate(&corev1.Service{
+					Spec: corev1.ServiceSpec{
+						Ports: []corev1.ServicePort{
+							{
+								Name:       "ekuiper",
+								Protocol:   corev1.ProtocolTCP,
+								Port:       9082,
+								TargetPort: intstr.Parse("9082"),
+							},
+						},
+					},
+				})
+				got.Default()
+				assert.Subset(t, got.GetServiceTemplate().Spec.Ports, []corev1.ServicePort{
+					{
+						Name:       "ekuiper",
+						Protocol:   corev1.ProtocolTCP,
+						Port:       9082,
+						TargetPort: intstr.Parse("9082"),
+					},
+				})
+			}
 		})
 	}
 }

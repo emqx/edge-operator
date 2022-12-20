@@ -104,7 +104,7 @@ jobs:
           echo "kind=${kind}" >> $GITHUB_OUTPUT
       - run: kubectl apply -f ${{ matrix.file }}
       - name: Check CR status
-        timeout-minutes: 1
+        timeout-minutes: 2
         run: |
           while
             phase="$(kubectl get ${{ steps.meta.outputs.kind }} ${{ steps.meta.outputs.name }} -o jsonpath='{.status.phase}')"
@@ -113,7 +113,7 @@ jobs:
             kubectl get deployment -l "app.kubernetes.io/instance=${{ steps.meta.outputs.name }}"
             sleep 1
           done
-      - if: failure()
+      - if: always()
         run: kubectl logs -l "edge.emqx.io/name=edge-operator" -n edge-operator-system -c manager --tail=100
       - if: failure()
         run: kubectl describe pods -l "edge.emqx.io/name=edge-operator" -n edge-operator-system

@@ -59,9 +59,15 @@ func (n *NeuronEX) GetEKuiper() *corev1.Container {
 func (n *NeuronEX) GetVolumeClaimTemplate() *corev1.PersistentVolumeClaim {
 	return n.Spec.VolumeClaimTemplate
 }
+func (n *NeuronEX) SetVolumeClaimTemplate(pvc *corev1.PersistentVolumeClaim) {
+	n.Spec.VolumeClaimTemplate = pvc
+}
 
 func (n *NeuronEX) GetServiceTemplate() *corev1.Service {
 	return n.Spec.ServiceTemplate
+}
+func (n *NeuronEX) SetServiceTemplate(svc *corev1.Service) {
+	n.Spec.ServiceTemplate = svc
 }
 
 // NeuronEXStatus defines the observed state of NeuronEX
