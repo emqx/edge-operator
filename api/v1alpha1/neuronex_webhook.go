@@ -41,18 +41,11 @@ func (r *NeuronEX) Default() {
 	neuronexlog.Info("Set default value", "name", r.Name)
 
 	setDefaultLabels(r)
-
-	mergeEnv(r.GetNeuron(), &defNeuron)
-	mergeContainerPorts(r.GetNeuron(), &defNeuron)
-
-	mergeEnv(r.GetEKuiper(), &defEKuiper)
-	setContainerPortsFromEnv(r.GetEKuiper())
+	setDefaultNeuronContainer(r)
+	setDefaultEKuiperContainer(r)
 
 	setDefaultService(r)
 	setDefaultVolume(r)
-
-	setDefaultNeuronProbe(r)
-	setDefaultEKuiperProbe(r)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

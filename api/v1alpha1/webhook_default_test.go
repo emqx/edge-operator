@@ -17,10 +17,10 @@ func TestDefault(t *testing.T) {
 			},
 			Spec: NeuronEXSpec{
 				Neuron: corev1.Container{
-					Name: "neuron",
+					Image: "emqx/neuron:latest",
 				},
 				EKuiper: corev1.Container{
-					Name: "ekuiper",
+					Image: "lfedge/ekuiper:latest-slim",
 				},
 				ServiceTemplate:     &corev1.Service{},
 				VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{},
@@ -61,6 +61,23 @@ func TestDefault(t *testing.T) {
 				InstanceKey:  got.GetName(),
 				ComponentKey: string(got.GetComponentType()),
 			}, got.GetLabels())
+		})
+		t.Run("check neuron container name and image pull policy", func(t *testing.T) {
+			got := deepCopyEdgeEdgeInterface(ins)
+			if got.GetNeuron() != nil {
+				got.Default()
+				assert.Equal(t, "neuron", got.GetNeuron().Name)
+
+				got.GetNeuron().Image = "emqx/neuron:latest"
+				got.GetNeuron().ImagePullPolicy = ""
+				got.Default()
+				assert.Equal(t, corev1.PullAlways, got.GetNeuron().ImagePullPolicy)
+
+				got.GetNeuron().Image = "emqx/neuron:2.3.0"
+				got.GetNeuron().ImagePullPolicy = ""
+				got.Default()
+				assert.Equal(t, corev1.PullIfNotPresent, got.GetNeuron().ImagePullPolicy)
+			}
 		})
 		t.Run("check neuron container env", func(t *testing.T) {
 			got := deepCopyEdgeEdgeInterface(ins)
@@ -103,7 +120,7 @@ func TestDefault(t *testing.T) {
 				assert.Equal(t, &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
-							Path:   "",
+							Path:   "/",
 							Port:   intstr.FromInt(7000),
 							Scheme: corev1.URISchemeHTTP,
 						},
@@ -123,7 +140,7 @@ func TestDefault(t *testing.T) {
 				assert.Equal(t, &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
-							Path:   "",
+							Path:   "/",
 							Port:   intstr.FromInt(7000),
 							Scheme: corev1.URISchemeHTTP,
 						},
@@ -134,6 +151,23 @@ func TestDefault(t *testing.T) {
 					SuccessThreshold:    1,
 					FailureThreshold:    12,
 				}, got.GetNeuron().LivenessProbe)
+			}
+		})
+		t.Run("check ekuiper container name and image pull policy", func(t *testing.T) {
+			got := deepCopyEdgeEdgeInterface(ins)
+			if got.GetEKuiper() != nil {
+				got.Default()
+				assert.Equal(t, "ekuiper", got.GetEKuiper().Name)
+
+				got.GetEKuiper().Image = "lfedge/ekuiper:latest-slim"
+				got.GetEKuiper().ImagePullPolicy = ""
+				got.Default()
+				assert.Equal(t, corev1.PullAlways, got.GetEKuiper().ImagePullPolicy)
+
+				got.GetEKuiper().Image = "lfedge/ekuiper:1.8.0-slim-python"
+				got.GetEKuiper().ImagePullPolicy = ""
+				got.Default()
+				assert.Equal(t, corev1.PullIfNotPresent, got.GetEKuiper().ImagePullPolicy)
 			}
 		})
 		t.Run("check ekuiper container env", func(t *testing.T) {
@@ -184,7 +218,7 @@ func TestDefault(t *testing.T) {
 				assert.Equal(t, &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
-							Path:   "",
+							Path:   "/",
 							Port:   intstr.FromInt(9081),
 							Scheme: corev1.URISchemeHTTP,
 						},
@@ -205,7 +239,7 @@ func TestDefault(t *testing.T) {
 				assert.Equal(t, &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
 						HTTPGet: &corev1.HTTPGetAction{
-							Path:   "",
+							Path:   "/",
 							Port:   intstr.FromInt(9081),
 							Scheme: corev1.URISchemeHTTP,
 						},

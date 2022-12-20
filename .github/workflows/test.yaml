@@ -113,6 +113,10 @@ jobs:
             kubectl get deployment -l "app.kubernetes.io/instance=${{ steps.meta.outputs.name }}"
             sleep 1
           done
+      - name: Check deployment doesn't update
+        run: |
+          generation=$(kubectl get deployment -l "app.kubernetes.io/instance=${{ steps.meta.outputs.name }}" -o 'jsonpath={.items[0].status.observedGeneration}')
+          if [ generation != 1 ]; then exit 1; fi
       - if: always()
         run: kubectl logs -l "edge.emqx.io/name=edge-operator" -n edge-operator-system -c manager --tail=100
       - if: failure()

@@ -43,11 +43,9 @@ func (r *EKuiper) Default() {
 	ekuiperlog.Info("Set default value", "name", r.Name)
 
 	setDefaultLabels(r)
-	mergeEnv(r.GetEKuiper(), &defEKuiper)
-	setContainerPortsFromEnv(r.GetEKuiper())
+	setDefaultEKuiperContainer(r)
 	setDefaultService(r)
 	setDefaultVolume(r)
-	setDefaultEKuiperProbe(r)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
