@@ -104,7 +104,7 @@ jobs:
           echo "kind=${kind}" >> $GITHUB_OUTPUT
       - run: kubectl apply -f ${{ matrix.file }}
       - name: Check CR status
-        timeout-minutes: 2
+        timeout-minutes: 1
         run: |
           while
             phase="$(kubectl get ${{ steps.meta.outputs.kind }} ${{ steps.meta.outputs.name }} -o jsonpath='{.status.phase}')"
@@ -116,14 +116,11 @@ jobs:
       - name: Check deployment doesn't update
         run: |
           generation=$(kubectl get deployment -l "app.kubernetes.io/instance=${{ steps.meta.outputs.name }}" -o 'jsonpath={.items[0].status.observedGeneration}')
-          if [ generation != 1 ]; then exit 1; fi
+          if [ $generation != 1 ]; then
+            kubectl get deployment -l "app.kubernetes.io/instance=${{ steps.meta.outputs.name }}" -o json
+            exit 1;
+          fi
       - if: always()
         run: kubectl logs -l "edge.emqx.io/name=edge-operator" -n edge-operator-system -c manager --tail=100
-      - if: failure()
-        run: kubectl describe pods -l "edge.emqx.io/name=edge-operator" -n edge-operator-system
-      - if: failure()
-        run: kubectl describe ${{ steps.meta.outputs.kind }} ${{ steps.meta.outputs.name }}
-      - if: failure()
-        run: kubectl describe pod -l "app.kubernetes.io/instance=${{ steps.meta.outputs.name }}"
       - if: failure()
         run: kubectl get pod -l "app.kubernetes.io/instance=${{ steps.meta.outputs.name }}" -o json

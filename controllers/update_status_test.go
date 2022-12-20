@@ -4,6 +4,7 @@ import (
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,8 +49,24 @@ var _ = Describe("basic test", Label("basic"), func() {
 				return got.GetStatus().Phase
 			}, timeout, interval).ShouldNot(Equal(corev1.PodRunning))
 
+			// Update pod status
 			pod.Status.Phase = corev1.PodRunning
 			Expect(k8sClient.Status().Update(ctx, pod)).Should(Succeed())
+
+			// Update deployment for target controller reconcile
+			deployment := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      ins.GetResName(),
+					Namespace: ins.GetNamespace(),
+				},
+			}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
+			}, timeout, interval).Should(Succeed())
+			deployment.Annotations["target-reconcile"] = "true"
+			Expect(k8sClient.Update(ctx, deployment)).Should(Succeed())
+
+			// Check status
 			Eventually(func() corev1.PodPhase {
 				got := deepCopyEdgeEdgeInterface(ins)
 				_ = k8sClient.Get(ctx, client.ObjectKeyFromObject(ins), got)
