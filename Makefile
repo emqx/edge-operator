@@ -58,10 +58,6 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 
-.PHONY: dev
-dev: manifests kustomize local-webhook
-	$(KUSTOMIZE) build config/dev | kubectl apply -f -
-
 ##@ Build
 
 .PHONY: build
@@ -122,6 +118,14 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
+.PHONY: dev
+dev: manifests kustomize local-webhook ## Instanll all the dependencies and run the controller locally
+	$(KUSTOMIZE) build config/dev | kubectl apply -f -
+
+.PHONY: undev
+undev: manifests kustomize local-webhook ## Uninstanll all the dependencies and run the controller locally
+	$(KUSTOMIZE) build config/dev | kubectl delete -f -
 
 ##@ Build Dependencies
 
