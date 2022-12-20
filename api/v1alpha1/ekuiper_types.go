@@ -29,9 +29,9 @@ import (
 // EKuiperSpec defines the desired state of EKuiper
 type EKuiperSpec struct {
 	EdgePodSpec         `json:",inline"`
-	EKuiper             corev1.Container              `json:"ekuiper,omitempty"`
-	VolumeClaimTemplate *corev1.PersistentVolumeClaim `json:"volumeClaimTemplate,omitempty"`
-	ServiceTemplate     *corev1.Service               `json:"serviceTemplate,omitempty"`
+	EKuiper             corev1.Container                      `json:"ekuiper,omitempty"`
+	VolumeClaimTemplate *corev1.PersistentVolumeClaimTemplate `json:"volumeClaimTemplate,omitempty"`
+	ServiceTemplate     *corev1.Service                       `json:"serviceTemplate,omitempty"`
 }
 
 func (ek *EKuiper) GetComponentType() ComponentType {
@@ -54,10 +54,10 @@ func (ek *EKuiper) GetEKuiper() *corev1.Container {
 	return &ek.Spec.EKuiper
 }
 
-func (ek *EKuiper) GetVolumeClaimTemplate() *corev1.PersistentVolumeClaim {
+func (ek *EKuiper) GetVolumeClaimTemplate() *corev1.PersistentVolumeClaimTemplate {
 	return ek.Spec.VolumeClaimTemplate
 }
-func (ek *EKuiper) SetVolumeClaimTemplate(pvc *corev1.PersistentVolumeClaim) {
+func (ek *EKuiper) SetVolumeClaimTemplate(pvc *corev1.PersistentVolumeClaimTemplate) {
 	ek.Spec.VolumeClaimTemplate = pvc
 }
 

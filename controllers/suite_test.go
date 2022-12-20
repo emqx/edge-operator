@@ -197,7 +197,7 @@ func deepCopyEdgeEdgeInterface(ins edgev1alpha1.EdgeInterface) edgev1alpha1.Edge
 }
 
 func addVolumeTemplate(ins edgev1alpha1.EdgeInterface) edgev1alpha1.EdgeInterface {
-	volumeTemplate := &corev1.PersistentVolumeClaim{
+	volumeTemplate := &corev1.PersistentVolumeClaimTemplate{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
 				"e2e/test": "volumeTemplate",

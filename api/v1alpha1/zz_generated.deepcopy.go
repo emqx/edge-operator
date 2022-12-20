@@ -92,7 +92,7 @@ func (in *EKuiperSpec) DeepCopyInto(out *EKuiperSpec) {
 	in.EKuiper.DeepCopyInto(&out.EKuiper)
 	if in.VolumeClaimTemplate != nil {
 		in, out := &in.VolumeClaimTemplate, &out.VolumeClaimTemplate
-		*out = new(v1.PersistentVolumeClaim)
+		*out = new(v1.PersistentVolumeClaimTemplate)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.ServiceTemplate != nil {
@@ -388,7 +388,7 @@ func (in *NeuronEXSpec) DeepCopyInto(out *NeuronEXSpec) {
 	in.EKuiper.DeepCopyInto(&out.EKuiper)
 	if in.VolumeClaimTemplate != nil {
 		in, out := &in.VolumeClaimTemplate, &out.VolumeClaimTemplate
-		*out = new(v1.PersistentVolumeClaim)
+		*out = new(v1.PersistentVolumeClaimTemplate)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.ServiceTemplate != nil {
@@ -468,7 +468,7 @@ func (in *NeuronSpec) DeepCopyInto(out *NeuronSpec) {
 	}
 	if in.VolumeClaimTemplate != nil {
 		in, out := &in.VolumeClaimTemplate, &out.VolumeClaimTemplate
-		*out = new(v1.PersistentVolumeClaim)
+		*out = new(v1.PersistentVolumeClaimTemplate)
 		(*in).DeepCopyInto(*out)
 	}
 }
