@@ -57,7 +57,7 @@ func TestDefault(t *testing.T) {
 			got.Default()
 			assert.Equal(t, map[string]string{
 				"foo":        "bar",
-				ManagerByKey: "edge-operator",
+				ManagedByKey: "edge-operator",
 				InstanceKey:  got.GetName(),
 				ComponentKey: string(got.GetComponentType()),
 			}, got.GetLabels())
@@ -281,7 +281,7 @@ func TestDefault(t *testing.T) {
 			assert.Equal(t, map[string]string{
 				"foo":        "bar",
 				"test":       "fake",
-				ManagerByKey: "edge-operator",
+				ManagedByKey: "edge-operator",
 				InstanceKey:  got.GetName(),
 				ComponentKey: string(got.GetComponentType()),
 			}, got.GetVolumeClaimTemplate().Labels)
@@ -310,7 +310,7 @@ func TestDefault(t *testing.T) {
 			assert.Equal(t, map[string]string{
 				"foo":        "bar",
 				"test":       "fake",
-				ManagerByKey: "edge-operator",
+				ManagedByKey: "edge-operator",
 				InstanceKey:  got.GetName(),
 				ComponentKey: string(got.GetComponentType()),
 			}, got.GetServiceTemplate().Labels)

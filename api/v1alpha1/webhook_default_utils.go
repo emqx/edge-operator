@@ -13,7 +13,7 @@ func setDefaultLabels(ins EdgeInterface) {
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[ManagerByKey] = "edge-operator"
+	labels[ManagedByKey] = "edge-operator"
 	labels[InstanceKey] = ins.GetName()
 	labels[ComponentKey] = string(ins.GetComponentType())
 	ins.SetLabels(labels)
