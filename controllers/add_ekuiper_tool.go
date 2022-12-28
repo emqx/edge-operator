@@ -18,7 +18,7 @@ func (a addEkuiperTool) reconcile(ctx context.Context, r *EdgeController, ins *e
 	logger := log.WithValues("namespace", ins.Namespace, "instance", ins.Name, "reconciler",
 		"add eKuiper tool")
 
-	volume := getEkuiperToolCOnfigVol(ins)
+	volume := getEkuiperToolConfigVol(ins)
 
 	cnfigMap := &corev1.ConfigMap{
 		ObjectMeta: internal.GetObjectMetadata(ins, volume.volumeSource.ConfigMap.Name),

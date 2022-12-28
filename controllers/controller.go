@@ -2,9 +2,8 @@ package controllers
 
 import (
 	"context"
-	"fmt"
-
 	emperror "emperror.dev/errors"
+	"fmt"
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
@@ -15,7 +14,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 var log = logf.Log.WithName("Edge Controller")
@@ -39,12 +37,12 @@ type EdgeController struct {
 	Recorder record.EventRecorder
 }
 
-func NewEdgeController(mgr manager.Manager) *EdgeController {
+func NewEdgeController(k8sClient client.Client, eventRecorder record.EventRecorder) *EdgeController {
 	annotator := patch.NewAnnotator(edgev1alpha1.GroupVersion.Group + "/last-applied-configuration")
 
 	return &EdgeController{
-		Client:   mgr.GetClient(),
-		Recorder: mgr.GetEventRecorderFor("neuronEX-controller"),
+		Client:   k8sClient,
+		Recorder: eventRecorder,
 		patcher: &patcher{
 			Maker: patch.NewPatchMaker(
 				annotator,
@@ -69,6 +67,7 @@ func (ec *EdgeController) reconcile(ctx context.Context, req ctrl.Request, cr cl
 		subs := []subReconciler[*edgev1alpha1.EKuiper]{
 			updateEkuiperStatus{},
 			addEKuiperPVC{},
+			addEKuiperSecret{},
 			addEkuiperDeployment{},
 			addEkuiperService{},
 			updateEkuiperStatus{},
@@ -78,6 +77,7 @@ func (ec *EdgeController) reconcile(ctx context.Context, req ctrl.Request, cr cl
 		subs := []subReconciler[*edgev1alpha1.Neuron]{
 			updateNeuronStatus{},
 			addNeuronPVC{},
+			addNeuronSecret{},
 			addNeuronDeployment{},
 			addNeuronService{},
 			updateNeuronStatus{},
@@ -88,6 +88,7 @@ func (ec *EdgeController) reconcile(ctx context.Context, req ctrl.Request, cr cl
 			updateNeuronEXStatus{},
 			addEkuiperTool{},
 			addNeuronExPVC{},
+			addNeuronExSecret{},
 			addNeuronExDeploy{},
 			addNeuronExService{},
 			updateNeuronEXStatus{},
@@ -134,12 +135,13 @@ func subReconcile[T CR](ec *EdgeController, ctx context.Context, obj client.Obje
 }
 
 func (ec *EdgeController) createOrUpdate(ctx context.Context, owner, newObj client.Object, logger logr.Logger) error {
+	gvk := newObj.GetObjectKind().GroupVersionKind()
 	existingObj := &unstructured.Unstructured{}
-	existingObj.SetGroupVersionKind(newObj.GetObjectKind().GroupVersionKind())
+	existingObj.SetGroupVersionKind(gvk)
 
 	if err := ec.Get(ctx, client.ObjectKeyFromObject(newObj), existingObj); err != nil {
 		if k8sErrors.IsNotFound(err) {
-			logger.Info("Create", "res", newObj.GetName())
+			logger.Info("Create "+gvk.Kind, "res", newObj.GetName())
 			return ec.create(ctx, owner, newObj)
 		}
 		return emperror.Wrapf(err, "failed to get %s %s", newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
@@ -150,7 +152,7 @@ func (ec *EdgeController) createOrUpdate(ctx context.Context, owner, newObj clie
 		return emperror.Wrapf(err, "failed to calculate patch for %s %s", newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
 	}
 	if !patcherResult.IsEmpty() {
-		logger.Info("Update", "res", newObj.GetName())
+		logger.Info("Update "+gvk.Kind, "res", newObj.GetName())
 		return ec.update(ctx, owner, newObj, existingObj)
 	}
 	return nil
