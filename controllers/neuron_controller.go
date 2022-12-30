@@ -18,12 +18,13 @@ package controllers
 
 import (
 	"context"
+	"k8s.io/client-go/tools/record"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // NeuronReconciler reconciles a NeuronEX object
@@ -31,9 +32,9 @@ type NeuronReconciler struct {
 	*EdgeController
 }
 
-func NewNeuronReconciler(mgr manager.Manager) *NeuronReconciler {
+func NewNeuronReconciler(k8sClient client.Client, eventRecorder record.EventRecorder) *NeuronReconciler {
 	return &NeuronReconciler{
-		EdgeController: NewEdgeController(mgr),
+		EdgeController: NewEdgeController(k8sClient, eventRecorder),
 	}
 }
 
@@ -61,5 +62,6 @@ func (r *NeuronReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Service{}).
 		Owns(&corev1.PersistentVolumeClaim{}).
 		Owns(&corev1.ConfigMap{}).
+		Owns(&corev1.Secret{}).
 		Complete(r)
 }

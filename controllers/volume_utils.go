@@ -6,7 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type mountTo string
+type mountTo = string
 
 const (
 	mountToNeuron      mountTo = "neuron"
@@ -15,85 +15,116 @@ const (
 )
 
 const (
-	neuronData        string = "neuron-data"
-	ekuiperData       string = "ekuiper-data"
-	ekuiperPlugins    string = "ekuiper-plugins"
-	ekuiperToolConfig string = "ekuiper-tool-config"
-	sharedTmp         string = "shared-tmp"
+	neuronData        = "neuron-data"
+	ekuiperData       = "ekuiper-data"
+	ekuiperPlugins    = "ekuiper-plugins"
+	ekuiperToolConfig = "ekuiper-tool-config"
+	sharedTmp         = "shared-tmp"
+	publicKey         = "public-key"
 )
+
+type mountAttr struct {
+	path     string
+	readOnly bool
+}
 
 type volumeInfo struct {
 	name         string
-	mountPath    string
-	mountTo      []mountTo
+	mounts       map[mountTo]mountAttr
 	volumeSource corev1.VolumeSource
+}
+
+func getPersistentVolumeSource(ins edgev1alpha1.EdgeInterface, name string) (volumeSource corev1.VolumeSource) {
+	if ins.GetVolumeClaimTemplate() != nil {
+		volumeSource.PersistentVolumeClaim = &corev1.PersistentVolumeClaimVolumeSource{
+			ClaimName: internal.GetResNameOnPanic(ins.GetVolumeClaimTemplate(), name),
+		}
+		return
+	}
+
+	volumeSource.EmptyDir = &corev1.EmptyDirVolumeSource{}
+	return
+}
+
+func getSecretVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
+	secretVol := volumeInfo{
+		name: publicKey,
+		mounts: map[mountTo]mountAttr{
+			mountToNeuron: {
+				path:     "/opt/neuron/certs",
+				readOnly: true,
+			},
+			mountToEkuiper: {
+				path:     "/kuiper/etc/mgmt",
+				readOnly: true,
+			},
+		},
+		volumeSource: corev1.VolumeSource{
+			Projected: &corev1.ProjectedVolumeSource{
+				Sources: []corev1.VolumeProjection{
+					{
+						Secret: &corev1.SecretProjection{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: internal.GetResNameOnPanic(ins, publicKey),
+							},
+						},
+					},
+				},
+				DefaultMode: &[]int32{0444}[0],
+			},
+		},
+	}
+	return secretVol
 }
 
 func getNeuronDataVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
 	v := volumeInfo{
-		name:      neuronData,
-		mountPath: "/opt/neuron/persistence",
-		mountTo:   []mountTo{mountToNeuron},
-	}
-	if ins.GetVolumeClaimTemplate() != nil {
-		v.volumeSource = corev1.VolumeSource{
-			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: internal.GetResNameOnPanic(ins.GetVolumeClaimTemplate(), v.name),
+		name: neuronData,
+		mounts: map[mountTo]mountAttr{
+			mountToNeuron: {
+				path: "/opt/neuron/persistence",
 			},
-		}
-		return v
-	}
-	v.volumeSource = corev1.VolumeSource{
-		EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+		volumeSource: getPersistentVolumeSource(ins, neuronData),
 	}
 	return v
 }
 
 func getEKuiperDataVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
 	v := volumeInfo{
-		name:      ekuiperData,
-		mountPath: "/kuiper/data",
-		mountTo:   []mountTo{mountToEkuiper},
-	}
-	if ins.GetVolumeClaimTemplate() != nil {
-		v.volumeSource = corev1.VolumeSource{
-			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: internal.GetResNameOnPanic(ins.GetVolumeClaimTemplate(), v.name),
+		name: ekuiperData,
+		mounts: map[mountTo]mountAttr{
+			mountToEkuiper: {
+				path: "/kuiper/data",
 			},
-		}
-		return v
-	}
-	v.volumeSource = corev1.VolumeSource{
-		EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+		volumeSource: getPersistentVolumeSource(ins, ekuiperData),
 	}
 	return v
 }
 
 func getEKuiperPluginsVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
 	v := volumeInfo{
-		name:      ekuiperPlugins,
-		mountPath: "/kuiper/plugins/portable",
-		mountTo:   []mountTo{mountToEkuiper},
-	}
-	if ins.GetVolumeClaimTemplate() != nil {
-		v.volumeSource = corev1.VolumeSource{
-			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: internal.GetResNameOnPanic(ins.GetVolumeClaimTemplate(), v.name),
+		name: ekuiperPlugins,
+		mounts: map[mountTo]mountAttr{
+			mountToEkuiper: {
+				path: "/kuiper/plugins/portable",
 			},
-		}
-		return v
-	}
-	v.volumeSource = corev1.VolumeSource{
-		EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+		volumeSource: getPersistentVolumeSource(ins, ekuiperPlugins),
 	}
 	return v
 }
 
-func getEkuiperToolCOnfigVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
+func getEkuiperToolConfigVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
 	return volumeInfo{
-		name:      ekuiperToolConfig,
-		mountPath: "/kuiper-kubernetes-tool/sample",
-		mountTo:   []mountTo{mountToEkuiperTool},
+		name: ekuiperToolConfig,
+		mounts: map[mountTo]mountAttr{
+			mountToEkuiperTool: {
+				path:     "/kuiper-kubernetes-tool/sample",
+				readOnly: true,
+			},
+		},
 		volumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
@@ -105,11 +136,17 @@ func getEkuiperToolCOnfigVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
 	}
 }
 
-func getShardTmpVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
+func getShardTmpVol() volumeInfo {
 	return volumeInfo{
-		name:      sharedTmp,
-		mountPath: "/tmp",
-		mountTo:   []mountTo{mountToNeuron, mountToEkuiper},
+		name: sharedTmp,
+		mounts: map[mountTo]mountAttr{
+			mountToNeuron: {
+				path: "/tmp",
+			},
+			mountToEkuiper: {
+				path: "/tmp",
+			},
+		},
 		volumeSource: corev1.VolumeSource{
 			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
@@ -117,14 +154,26 @@ func getShardTmpVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
 }
 
 func getVolumeList(ins edgev1alpha1.EdgeInterface) []volumeInfo {
-	list := []volumeInfo{}
-	switch ins.(type) {
-	case *edgev1alpha1.NeuronEX:
-		list = append(list, getNeuronDataVol(ins), getEKuiperDataVol(ins), getEKuiperPluginsVol(ins), getEkuiperToolCOnfigVol(ins), getShardTmpVol(ins))
-	case *edgev1alpha1.Neuron:
-		list = append(list, getNeuronDataVol(ins))
-	case *edgev1alpha1.EKuiper:
-		list = append(list, getEKuiperDataVol(ins), getEKuiperPluginsVol(ins))
+	switch ins.GetComponentType() {
+	case edgev1alpha1.ComponentTypeNeuronEx:
+		return []volumeInfo{
+			getNeuronDataVol(ins),
+			getEKuiperDataVol(ins),
+			getEKuiperPluginsVol(ins),
+			getEkuiperToolConfigVol(ins),
+			getShardTmpVol(),
+			getSecretVol(ins),
+		}
+	case edgev1alpha1.ComponentTypeNeuron:
+		return []volumeInfo{
+			getNeuronDataVol(ins),
+			getSecretVol(ins)}
+	case edgev1alpha1.ComponentTypeEKuiper:
+		return []volumeInfo{
+			getEKuiperDataVol(ins),
+			getEKuiperPluginsVol(ins),
+			getSecretVol(ins)}
+	default:
+		panic("Unknown component " + ins.GetComponentType())
 	}
-	return list
 }

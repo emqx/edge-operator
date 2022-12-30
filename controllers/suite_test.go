@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"github.com/emqx/edge-operator/mock"
 	"path/filepath"
 	"testing"
 	"time"
@@ -88,9 +89,12 @@ var _ = BeforeSuite(func() {
 		Scheme:             scheme.Scheme,
 		MetricsBindAddress: "0",
 	})
-	Expect(NewNeuronEXReconciler(mgr).SetupWithManager(mgr)).Should(Succeed())
-	Expect(NewNeuronReconciler(mgr).SetupWithManager(mgr)).Should(Succeed())
-	Expect(NewEKuiperReconciler(mgr).SetupWithManager(mgr)).Should(Succeed())
+
+	eventRecorder := mock.GetEventRecorderFor("mockEventRecorder")
+	client := mgr.GetClient()
+	Expect(NewNeuronEXReconciler(client, eventRecorder).SetupWithManager(mgr)).Should(Succeed())
+	Expect(NewNeuronReconciler(client, eventRecorder).SetupWithManager(mgr)).Should(Succeed())
+	Expect(NewEKuiperReconciler(client, eventRecorder).SetupWithManager(mgr)).Should(Succeed())
 
 	go func() {
 		defer GinkgoRecover()
@@ -183,13 +187,13 @@ func getEKuiper() *edgev1alpha1.EKuiper {
 
 func deepCopyEdgeEdgeInterface(ins edgev1alpha1.EdgeInterface) edgev1alpha1.EdgeInterface {
 	var got edgev1alpha1.EdgeInterface
-	switch resource := ins.(type) {
+	switch res := ins.(type) {
 	case *edgev1alpha1.NeuronEX:
-		got = resource.DeepCopy()
+		got = res.DeepCopy()
 	case *edgev1alpha1.Neuron:
-		got = resource.DeepCopy()
+		got = res.DeepCopy()
 	case *edgev1alpha1.EKuiper:
-		got = resource.DeepCopy()
+		got = res.DeepCopy()
 	default:
 		panic("unknown type")
 	}
@@ -212,22 +216,22 @@ func addVolumeTemplate(ins edgev1alpha1.EdgeInterface) edgev1alpha1.EdgeInterfac
 			},
 		},
 	}
-	switch resource := ins.(type) {
+	switch res := ins.(type) {
 	case *edgev1alpha1.NeuronEX:
-		new := resource.DeepCopy()
-		new.Spec.VolumeClaimTemplate = volumeTemplate
-		new.Default()
-		return new
+		newRes := res.DeepCopy()
+		newRes.Spec.VolumeClaimTemplate = volumeTemplate
+		newRes.Default()
+		return newRes
 	case *edgev1alpha1.Neuron:
-		new := resource.DeepCopy()
-		new.Spec.VolumeClaimTemplate = volumeTemplate
-		new.Default()
-		return new
+		newRes := res.DeepCopy()
+		newRes.Spec.VolumeClaimTemplate = volumeTemplate
+		newRes.Default()
+		return newRes
 	case *edgev1alpha1.EKuiper:
-		new := resource.DeepCopy()
-		new.Spec.VolumeClaimTemplate = volumeTemplate
-		new.Default()
-		return new
+		newRes := res.DeepCopy()
+		newRes.Spec.VolumeClaimTemplate = volumeTemplate
+		newRes.Default()
+		return newRes
 	default:
 		panic("unknown type")
 	}
@@ -241,22 +245,22 @@ func addServiceTemplate(ins edgev1alpha1.EdgeInterface) edgev1alpha1.EdgeInterfa
 			},
 		},
 	}
-	switch resource := ins.(type) {
+	switch res := ins.(type) {
 	case *edgev1alpha1.NeuronEX:
-		new := resource.DeepCopy()
-		new.Spec.ServiceTemplate = serviceTemplate
-		new.Default()
-		return new
+		newRes := res.DeepCopy()
+		newRes.Spec.ServiceTemplate = serviceTemplate
+		newRes.Default()
+		return newRes
 	case *edgev1alpha1.Neuron:
-		new := resource.DeepCopy()
-		new.Spec.ServiceTemplate = serviceTemplate
-		new.Default()
-		return new
+		newRes := res.DeepCopy()
+		newRes.Spec.ServiceTemplate = serviceTemplate
+		newRes.Default()
+		return newRes
 	case *edgev1alpha1.EKuiper:
-		new := resource.DeepCopy()
-		new.Spec.ServiceTemplate = serviceTemplate
-		new.Default()
-		return new
+		newRes := res.DeepCopy()
+		newRes.Spec.ServiceTemplate = serviceTemplate
+		newRes.Default()
+		return newRes
 	default:
 		panic("unknown type")
 	}

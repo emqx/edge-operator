@@ -20,7 +20,7 @@ func (a addEKuiperPVC) reconcile(ctx context.Context, r *EdgeController, instanc
 
 	logger := log.WithValues("namespace", instance.Namespace, "instance", instance.Name, "reconciler",
 		"add eKuiper PVC")
-	return addPVC(ctx, r, instance, edgev1alpha1.ComponentTypeEKuiper, logger)
+	return addPVC(ctx, r, instance, logger)
 }
 
 type addNeuronPVC struct{}
@@ -32,7 +32,7 @@ func (a addNeuronPVC) reconcile(ctx context.Context, r *EdgeController, instance
 
 	logger := log.WithValues("namespace", instance.Namespace, "instance", instance.Name, "reconciler",
 		"add Neuron PVC")
-	return addPVC(ctx, r, instance, edgev1alpha1.ComponentTypeNeuron, logger)
+	return addPVC(ctx, r, instance, logger)
 }
 
 type addNeuronExPVC struct{}
@@ -44,22 +44,20 @@ func (a addNeuronExPVC) reconcile(ctx context.Context, r *EdgeController, instan
 
 	logger := log.WithValues("namespace", instance.Namespace, "instance", instance.Name, "reconciler",
 		"add NeuronEx PVC")
-	return addPVC(ctx, r, instance, edgev1alpha1.ComponentTypeNeuronEx, logger)
+	return addPVC(ctx, r, instance, logger)
 }
 
-func addPVC(ctx context.Context, r *EdgeController, ins edgev1alpha1.EdgeInterface, compType edgev1alpha1.ComponentType,
-	logger logr.Logger) *requeue {
-
+func addPVC(ctx context.Context, r *EdgeController, ins edgev1alpha1.EdgeInterface, logger logr.Logger) *requeue {
 	vols := getVolumeList(ins)
 	for i := range vols {
 		if vols[i].volumeSource.PersistentVolumeClaim == nil {
 			continue
 		}
+		template := ins.GetVolumeClaimTemplate()
 		pvc := &corev1.PersistentVolumeClaim{
-			ObjectMeta: internal.GetObjectMetadata(ins.GetVolumeClaimTemplate(), internal.GetResNameOnPanic(ins.GetVolumeClaimTemplate(), vols[i].name)),
-			Spec:       ins.GetVolumeClaimTemplate().Spec,
+			ObjectMeta: internal.GetObjectMetadata(template, internal.GetResNameOnPanic(template, vols[i].name)),
+			Spec:       template.Spec,
 		}
-		pvc.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("PersistentVolumeClaimTemplate"))
 
 		existingPVC := &corev1.PersistentVolumeClaim{}
 		err := r.Get(ctx, client.ObjectKeyFromObject(pvc), existingPVC)

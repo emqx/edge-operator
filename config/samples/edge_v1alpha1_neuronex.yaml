@@ -9,6 +9,10 @@ metadata:
     app.kubernetes.io/created-by: edge-operator
   name: neuronex-sample
 spec:
+#  publicKeys:
+#  - name: sample-secret
+#    data: base64encode
+
   volumeClaimTemplate: ## optional
     metadata:
       name: neuronex-sample
@@ -44,7 +48,7 @@ spec:
     imagePullPolicy: IfNotPresent ## optional
     livenessProbe:  ## optional
       httpGet:
-        path: ""
+        path: "/"
         port: 9081
         scheme: HTTP
       initialDelaySeconds: 10

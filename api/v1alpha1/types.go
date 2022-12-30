@@ -40,7 +40,11 @@ type EdgeInterface interface {
 	SetStatus(status EdgeStatus)
 }
 
+// +kubebuilder:object:generate=true
 type EdgePodSpec struct {
+	// List of JWTSecret that will be mounted by containers belonging to the pod
+	// +optional
+	PublicKeys []PublicKey `json:"publicKeys,omitempty"`
 	// List of volumes that can be mounted by containers belonging to the pod.
 	// More info: https://kubernetes.io/docs/concepts/storage/volumes
 	// +optional
@@ -318,4 +322,13 @@ type EdgeStatus struct {
 	// More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#pod-phase
 	// +optional
 	Phase corev1.PodPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase,casttype=PodPhase"`
+}
+
+type PublicKey struct {
+	// the file name to mount the JWTSecret as file
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+	// the JWTSecret that encoding in base64
+	// +kubebuilder:validation:Required
+	Data string `json:"data"`
 }

@@ -48,14 +48,36 @@ var _ = Describe("check deployment when volume template not set", func() {
 			{Name: "ekuiper-plugins", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
 			{Name: "ekuiper-tool-config", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{Name: internal.GetResNameOnPanic(neuronEX, ekuiperToolConfig)},
-				DefaultMode:          &[]int32{corev1.ConfigMapVolumeSourceDefaultMode}[0],
-			}}}}),
+				DefaultMode:          &[]int32{corev1.ConfigMapVolumeSourceDefaultMode}[0]}},
+			},
+			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
+				Sources: []corev1.VolumeProjection{{
+					Secret: &corev1.SecretProjection{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: internal.GetResNameOnPanic(neuronEX, publicKey)}}}},
+				DefaultMode: &[]int32{0444}[0]}},
+			},
+		}),
 		Entry("neuron", neuron, []corev1.Volume{
 			{Name: "neuron-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
+				Sources: []corev1.VolumeProjection{{
+					Secret: &corev1.SecretProjection{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: internal.GetResNameOnPanic(neuron, publicKey)}}}},
+				DefaultMode: &[]int32{0444}[0]}},
+			},
 		}),
 		Entry("ekuiper", ekuiper, []corev1.Volume{
 			{Name: "ekuiper-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
 			{Name: "ekuiper-plugins", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
+				Sources: []corev1.VolumeProjection{{
+					Secret: &corev1.SecretProjection{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: internal.GetResNameOnPanic(ekuiper, publicKey)}}}},
+				DefaultMode: &[]int32{0444}[0]}},
+			},
 		}),
 	)
 })
@@ -107,13 +129,35 @@ var _ = Describe("check deployment when volume template set", func() {
 			{Name: "ekuiper-tool-config", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{Name: internal.GetResNameOnPanic(neuronEX, ekuiperToolConfig)},
 				DefaultMode:          &[]int32{corev1.ConfigMapVolumeSourceDefaultMode}[0],
-			}}}}),
+			}}},
+			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
+				Sources: []corev1.VolumeProjection{{
+					Secret: &corev1.SecretProjection{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: internal.GetResNameOnPanic(neuronEX, publicKey)}}}},
+				DefaultMode: &[]int32{0444}[0]}},
+			},
+		}),
 		Entry("neuron", addVolumeTemplate(neuron), []corev1.Volume{
 			{Name: "neuron-data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: addVolumeTemplate(neuron).GetVolumeClaimTemplate().Name + "-neuron-data"}}},
+			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
+				Sources: []corev1.VolumeProjection{{
+					Secret: &corev1.SecretProjection{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: internal.GetResNameOnPanic(neuron, publicKey)}}}},
+				DefaultMode: &[]int32{0444}[0]}},
+			},
 		}),
 		Entry("ekuiper", addVolumeTemplate(ekuiper), []corev1.Volume{
 			{Name: "ekuiper-data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: addVolumeTemplate(ekuiper).GetVolumeClaimTemplate().Name + "-ekuiper-data"}}},
 			{Name: "ekuiper-plugins", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: addVolumeTemplate(ekuiper).GetVolumeClaimTemplate().Name + "-ekuiper-plugins"}}},
+			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
+				Sources: []corev1.VolumeProjection{{
+					Secret: &corev1.SecretProjection{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: internal.GetResNameOnPanic(ekuiper, publicKey)}}}},
+				DefaultMode: &[]int32{0444}[0]}},
+			},
 		}),
 	)
 })
@@ -178,6 +222,7 @@ var _ = Describe("check deployment and containers", func() {
 		Expect(deployment.Spec.Template.Spec.Containers[0].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
 			{Name: "shared-tmp", MountPath: "/tmp"},
 			{Name: "neuron-data", MountPath: "/opt/neuron/persistence"},
+			{Name: publicKey, MountPath: "/opt/neuron/certs", ReadOnly: true},
 		}))
 		// ekuiper container
 		Expect(deployment.Spec.Template.Spec.Containers[1].Name).Should(Equal(neuronEX.Spec.EKuiper.Name))
@@ -194,6 +239,7 @@ var _ = Describe("check deployment and containers", func() {
 			{Name: "shared-tmp", MountPath: "/tmp"},
 			{Name: "ekuiper-data", MountPath: "/kuiper/data"},
 			{Name: "ekuiper-plugins", MountPath: "/kuiper/plugins/portable"},
+			{Name: publicKey, MountPath: "/kuiper/etc/mgmt", ReadOnly: true},
 		}))
 		// ekuiper tool container
 		Expect(deployment.Spec.Template.Spec.Containers[2].Name).Should(Equal("ekuiper-tool"))
@@ -224,6 +270,7 @@ var _ = Describe("check deployment and containers", func() {
 		}))
 		Expect(deployment.Spec.Template.Spec.Containers[0].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
 			{Name: "neuron-data", MountPath: "/opt/neuron/persistence"},
+			{Name: publicKey, MountPath: "/opt/neuron/certs", ReadOnly: true},
 		}))
 	})
 
@@ -251,6 +298,7 @@ var _ = Describe("check deployment and containers", func() {
 		Expect(deployment.Spec.Template.Spec.Containers[0].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
 			{Name: "ekuiper-data", MountPath: "/kuiper/data"},
 			{Name: "ekuiper-plugins", MountPath: "/kuiper/plugins/portable"},
+			{Name: publicKey, MountPath: "/kuiper/etc/mgmt", ReadOnly: true},
 		}))
 	})
 

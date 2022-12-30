@@ -2915,6 +2915,18 @@ spec:
                 type: integer
               priorityClassName:
                 type: string
+              publicKeys:
+                items:
+                  properties:
+                    data:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - data
+                  - name
+                  type: object
+                type: array
               readinessGates:
                 items:
                   properties:

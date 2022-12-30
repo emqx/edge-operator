@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"github.com/emqx/edge-operator/mock"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,21 +10,12 @@ import (
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
-
-type mockEventRecorder struct{}
-
-func (m mockEventRecorder) Event(object runtime.Object, eventtype, reason, message string) {}
-func (m mockEventRecorder) Eventf(object runtime.Object, eventtype, reason, message string, args ...interface{}) {
-}
-func (m mockEventRecorder) AnnotatedEventf(object runtime.Object, annotations map[string]string, eventtype, reason, messageFmt string, args ...interface{}) {
-}
 
 func TestProcessRequeue(t *testing.T) {
 	fakeReconcile := struct{}{}
 	fakeObj := &corev1.ConfigMap{}
-	fakeEventRecorder := &mockEventRecorder{}
+	fakeEventRecorder := mock.GetEventRecorderFor("mock")
 	fakeLogger := log.WithName("fake logger")
 
 	t.Run("should return err == nil when requeue.curError equal nil", func(t *testing.T) {

@@ -9,6 +9,10 @@ metadata:
     app.kubernetes.io/created-by: edge-operator
   name: ekuiper-sample
 spec:
+#  publicKeys:
+#  - name: sample-secret
+#    data: base64encode
+
   ekuiper:
     name: "ekuiper"
     image: lfedge/ekuiper:1.7-slim-python

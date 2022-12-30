@@ -55,6 +55,7 @@ func init() {
 //+kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch
 //+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch
 //+kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch;create;update;patch
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch
 
 func main() {
@@ -99,15 +100,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = controllers.NewNeuronEXReconciler(mgr).SetupWithManager(mgr); err != nil {
+	eventRecorder := mgr.GetEventRecorderFor("neuronEX-controller")
+	client := mgr.GetClient()
+	if err = controllers.NewNeuronEXReconciler(client, eventRecorder).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "NeuronEX")
 		os.Exit(1)
 	}
-	if err = controllers.NewEKuiperReconciler(mgr).SetupWithManager(mgr); err != nil {
+	eventRecorder = mgr.GetEventRecorderFor("eKuiper-controller")
+	if err = controllers.NewEKuiperReconciler(client, eventRecorder).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EKuiper")
 		os.Exit(1)
 	}
-	if err = controllers.NewNeuronReconciler(mgr).SetupWithManager(mgr); err != nil {
+	eventRecorder = mgr.GetEventRecorderFor("neuron-controller")
+	if err = controllers.NewNeuronReconciler(client, eventRecorder).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Neuron")
 		os.Exit(1)
 	}

@@ -9,6 +9,10 @@ metadata:
     app.kubernetes.io/created-by: edge-operator
   name: neuron-sample
 spec:
+#  publicKeys:
+#    - name: sample-secret
+#      data: base64encode
+
   volumeClaimTemplate: ## optional
     metadata:
       name: neuron-sample
