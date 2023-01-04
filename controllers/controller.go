@@ -101,7 +101,6 @@ func subReconcile[T CR](ec *EdgeController, ctx context.Context, obj client.Obje
 	ctrl.Result, error) {
 
 	logger := log.WithValues("namespace", obj.GetNamespace(), "instance", obj.GetName())
-	logger.Info("reconcile")
 
 	delayedRequeue := false
 	for _, subReconciler := range subReconcilers {
@@ -141,7 +140,7 @@ func (ec *EdgeController) createOrUpdate(ctx context.Context, owner, newObj clie
 
 	if err := ec.Get(ctx, client.ObjectKeyFromObject(newObj), existingObj); err != nil {
 		if k8sErrors.IsNotFound(err) {
-			logger.Info("Create "+gvk.Kind, "res", newObj.GetName())
+			logger.Info("Create "+newObj.GetName(), "kind", gvk.Kind)
 			return ec.create(ctx, owner, newObj)
 		}
 		return emperror.Wrapf(err, "failed to get %s %s", newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
@@ -152,7 +151,7 @@ func (ec *EdgeController) createOrUpdate(ctx context.Context, owner, newObj clie
 		return emperror.Wrapf(err, "failed to calculate patch for %s %s", newObj.GetObjectKind().GroupVersionKind().Kind, newObj.GetName())
 	}
 	if !patcherResult.IsEmpty() {
-		logger.Info("Update "+gvk.Kind, "res", newObj.GetName())
+		logger.Info("Update "+newObj.GetName(), "kind", gvk.Kind)
 		return ec.update(ctx, owner, newObj, existingObj)
 	}
 	return nil
@@ -185,8 +184,11 @@ func (ec *EdgeController) update(ctx context.Context, owner, newObj, existingObj
 	// annotation must not be nil, because it is set on line 179
 	annotations := newObj.GetAnnotations()
 	for key, value := range existingObj.GetAnnotations() {
-		annotations[key] = value
+		if _, ok := annotations[key]; !ok {
+			annotations[key] = value
+		}
 	}
+
 	newObj.SetAnnotations(annotations)
 	newObj.SetResourceVersion(existingObj.GetResourceVersion())
 	newObj.SetCreationTimestamp(existingObj.GetCreationTimestamp())

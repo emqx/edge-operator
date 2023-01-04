@@ -2,10 +2,11 @@ package controllers
 
 import (
 	"context"
-
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"github.com/go-logr/logr"
-	corev1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -37,25 +38,35 @@ func (u updateNeuronEXStatus) reconcile(ctx context.Context, r *EdgeController, 
 }
 
 func updateStatus(ctx context.Context, r *EdgeController, instance edgev1alpha1.EdgeInterface, logger logr.Logger) *requeue {
-	podList := &corev1.PodList{}
-	if err := r.List(ctx, podList,
-		client.InNamespace(instance.GetNamespace()),
-		client.MatchingLabels(instance.GetLabels()),
-	); err != nil {
-		return nil
+	deploy := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: instance.GetNamespace(),
+			Name:      instance.GetResName(),
+		},
 	}
-	if len(podList.Items) == 0 {
+
+	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(deploy), deploy); err != nil {
+		if !k8sErrors.IsNotFound(err) {
+			return &requeue{curError: err}
+		}
 		return nil
 	}
 
-	instance.SetStatus(
-		edgev1alpha1.EdgeStatus{
-			Phase: podList.Items[0].Status.Phase,
-		},
-	)
-	logger.Info("Update status")
-	if err := r.Status().Update(ctx, instance); err != nil {
-		return &requeue{curError: err}
+	phase := edgev1alpha1.CRNotReady
+	if deploy.Status.ReadyReplicas == deploy.Status.Replicas {
+		phase = edgev1alpha1.CRReady
+	}
+
+	if instance.GetStatus().Phase != phase {
+		instance.SetStatus(
+			&edgev1alpha1.EdgeStatus{
+				Phase: phase,
+			},
+		)
+		logger.Info("Update status", "current", instance.GetStatus())
+		if err := r.Status().Update(ctx, instance); err != nil {
+			return &requeue{curError: err}
+		}
 	}
 	return nil
 }
