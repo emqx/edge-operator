@@ -8,6 +8,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -374,6 +375,55 @@ var _ = Describe("check deployment and containers", func() {
 				_ = k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
 				return deployment.Spec.Template.Spec.Containers[0].Image
 			}, timeout, interval).Should(Equal("lfedge/ekuiper:latest-slim"))
+		})
+	})
+})
+
+var _ = Describe("update deployment", func() {
+	var ekuiper = getEKuiper()
+
+	BeforeEach(func() {
+		Expect(k8sClient.Create(ctx, ekuiper.DeepCopy())).Should(Succeed())
+	})
+
+	AfterEach(func() {
+		Expect(k8sClient.Delete(ctx, ekuiper)).Should(Succeed())
+	})
+
+	Context("update deployment", func() {
+		deployment := &appsv1.Deployment{}
+		var err error
+		BeforeEach(func() {
+			Eventually(func() error {
+				return k8sClient.Get(ctx, types.NamespacedName{
+					Name:      ekuiper.GetResName(),
+					Namespace: ekuiper.GetNamespace(),
+				}, deployment)
+			}, timeout, interval).Should(Succeed())
+
+			newEKuiper := ekuiper.DeepCopy()
+			newEKuiper.Annotations["update"] = "test"
+			err = k8sClient.Patch(ctx, newEKuiper, client.MergeFrom(ekuiper))
+		})
+
+		It("should succeed", func() {
+			Expect(err).Should(Succeed())
+		})
+
+		When("deploy has been updated", func() {
+			Context("check annotation", func() {
+				It("should have new annotation", func() {
+					Eventually(func() map[string]string {
+						err = k8sClient.Get(ctx, types.NamespacedName{
+							Name:      ekuiper.GetResName(),
+							Namespace: ekuiper.GetNamespace(),
+						}, deployment)
+						Expect(err).Should(Succeed())
+
+						return deployment.Annotations
+					}, timeout, interval).Should(HaveKey("update"))
+				})
+			})
 		})
 	})
 })

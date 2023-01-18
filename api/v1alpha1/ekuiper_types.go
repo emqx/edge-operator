@@ -77,8 +77,8 @@ func (n *EKuiper) GetStatus() EdgeStatus {
 	return n.Status.EdgeStatus
 }
 
-func (n *EKuiper) SetStatus(status EdgeStatus) {
-	n.Status.EdgeStatus = status
+func (n *EKuiper) SetStatus(status *EdgeStatus) {
+	n.Status.EdgeStatus = *status
 }
 
 //+kubebuilder:object:root=true

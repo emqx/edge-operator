@@ -79,8 +79,8 @@ func (n *Neuron) GetStatus() EdgeStatus {
 	return n.Status.EdgeStatus
 }
 
-func (n *Neuron) SetStatus(status EdgeStatus) {
-	n.Status.EdgeStatus = status
+func (n *Neuron) SetStatus(status *EdgeStatus) {
+	n.Status.EdgeStatus = *status
 }
 
 //+kubebuilder:object:root=true
