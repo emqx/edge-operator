@@ -2,10 +2,6 @@ package controllers
 
 import (
 	"context"
-	"path/filepath"
-	"regexp"
-	"strings"
-
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"github.com/emqx/edge-operator/internal"
 	appsv1 "k8s.io/api/apps/v1"
@@ -99,7 +95,6 @@ func getPodSpec(instance edgev1alpha1.EdgeInterface) corev1.PodSpec {
 		podSpec.Containers = []corev1.Container{
 			getNeuronContainer(instance, vols),
 			getEkuiperContainer(instance, vols),
-			getEkuiperToolContainer(instance, vols),
 		}
 	case edgev1alpha1.ComponentTypeEKuiper:
 		podSpec.Containers = []corev1.Container{
@@ -125,27 +120,6 @@ func getEkuiperContainer(ins edgev1alpha1.EdgeInterface, vols []volumeInfo) core
 	container := ins.GetEKuiper().DeepCopy()
 	appendVolumeMount(container, mountToEkuiper, vols)
 	return *container
-}
-
-func getEkuiperToolContainer(ins edgev1alpha1.EdgeInterface, vols []volumeInfo) corev1.Container {
-	compile := regexp.MustCompile(`[0-9]+(\.[0-9]+)?(\.[0-9]+)?(-(alpha|beta|rc)\.[0-9]+)?`)
-
-	slice := strings.Split(ins.GetEKuiper().Image, ":")
-	registry := filepath.Dir(slice[0])
-	version := "latest"
-	if compile.MatchString(slice[1]) {
-		version = compile.FindString(slice[1])
-	}
-
-	container := corev1.Container{
-		Name:                     "ekuiper-tool",
-		Image:                    registry + "/ekuiper-kubernetes-tool:" + version,
-		ImagePullPolicy:          ins.GetEKuiper().ImagePullPolicy,
-		TerminationMessagePath:   corev1.TerminationMessagePathDefault,
-		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
-	}
-	appendVolumeMount(&container, mountToEkuiperTool, vols)
-	return container
 }
 
 func appendVolumeMount(container *corev1.Container, mount mountTo, vols []volumeInfo) {

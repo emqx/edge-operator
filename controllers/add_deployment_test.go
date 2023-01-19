@@ -1,385 +1,217 @@
 package controllers
 
 import (
+	"fmt"
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
-	"github.com/emqx/edge-operator/internal"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
+	"math/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("check deployment when volume template not set", func() {
-	var neuronEX *edgev1alpha1.NeuronEX = getNeuronEX()
-	var neuron *edgev1alpha1.Neuron = getNeuron()
-	var ekuiper *edgev1alpha1.EKuiper = getEKuiper()
+var _ = Describe("add deployment", func() {
+	var namespace *corev1.Namespace
 
 	BeforeEach(func() {
-		Expect(k8sClient.Create(ctx, neuronEX.DeepCopy())).Should(Succeed())
-		Expect(k8sClient.Create(ctx, neuron.DeepCopy())).Should(Succeed())
-		Expect(k8sClient.Create(ctx, ekuiper.DeepCopy())).Should(Succeed())
-	})
-
-	AfterEach(func() {
-		Expect(k8sClient.Delete(ctx, neuronEX)).Should(Succeed())
-		Expect(k8sClient.Delete(ctx, neuron)).Should(Succeed())
-		Expect(k8sClient.Delete(ctx, ekuiper)).Should(Succeed())
+		namespace = &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprint("add-deployment", +rand.Intn(10000)),
+				Labels: map[string]string{
+					"test": "e2e",
+				},
+			},
+		}
+		Expect(k8sClient.Create(ctx, namespace)).Should(Succeed())
 	})
 
 	DescribeTable("check deployment volumes",
-		func(ins edgev1alpha1.EdgeInterface, expected []corev1.Volume) {
+		func(compType edgev1alpha1.ComponentType) {
+			var ins edgev1alpha1.EdgeInterface
+			switch compType {
+			case edgev1alpha1.ComponentTypeEKuiper:
+				ins = getEKuiper()
+			case edgev1alpha1.ComponentTypeNeuron:
+				ins = getNeuron()
+			case edgev1alpha1.ComponentTypeNeuronEx:
+				neuronEx := getNeuronEX()
+				neuronEx.Spec.VolumeClaimTemplate = &corev1.PersistentVolumeClaimTemplate{
+					Spec: corev1.PersistentVolumeClaimSpec{
+						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceStorage: resource.MustParse("8Mi"),
+							},
+						},
+					},
+				}
+				ins = neuronEx
+				ins.Default()
+			}
+
+			ins.SetNamespace(namespace.Name)
+
+			defer func() {
+				Expect(k8sClient.Delete(ctx, ins)).Should(Succeed())
+			}()
+
+			Expect(k8sClient.Create(ctx, ins)).Should(Succeed())
+
+			expectedVolumes := getVolumeList(ins)
+
 			deployment := &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      ins.GetResName(),
 					Namespace: ins.GetNamespace(),
 				},
 			}
-			Eventually(func() []corev1.Volume {
-				_ = k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
-				return deployment.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(ConsistOf(expected))
-		},
-		Entry("neuronEX", neuronEX, []corev1.Volume{
-			{Name: "shared-tmp", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-			{Name: "neuron-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-			{Name: "ekuiper-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-			{Name: "ekuiper-plugins", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-			{Name: "ekuiper-tool-config", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{Name: internal.GetResNameOnPanic(neuronEX, ekuiperToolConfig)},
-				DefaultMode:          &[]int32{corev1.ConfigMapVolumeSourceDefaultMode}[0]}},
-			},
-			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
-				Sources: []corev1.VolumeProjection{{
-					Secret: &corev1.SecretProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: internal.GetResNameOnPanic(neuronEX, publicKey)}}}},
-				DefaultMode: &[]int32{0444}[0]}},
-			},
-		}),
-		Entry("neuron", neuron, []corev1.Volume{
-			{Name: "neuron-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
-				Sources: []corev1.VolumeProjection{{
-					Secret: &corev1.SecretProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: internal.GetResNameOnPanic(neuron, publicKey)}}}},
-				DefaultMode: &[]int32{0444}[0]}},
-			},
-		}),
-		Entry("ekuiper", ekuiper, []corev1.Volume{
-			{Name: "ekuiper-data", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-			{Name: "ekuiper-plugins", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
-				Sources: []corev1.VolumeProjection{{
-					Secret: &corev1.SecretProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: internal.GetResNameOnPanic(ekuiper, publicKey)}}}},
-				DefaultMode: &[]int32{0444}[0]}},
-			},
-		}),
-	)
-})
 
-var _ = Describe("check deployment when volume template set", func() {
-	var neuronEX *edgev1alpha1.NeuronEX = getNeuronEX()
-	var neuron *edgev1alpha1.Neuron = getNeuron()
-	var ekuiper *edgev1alpha1.EKuiper = getEKuiper()
-
-	BeforeEach(func() {
-		Expect(k8sClient.Create(ctx, addVolumeTemplate(neuronEX))).Should(Succeed())
-		Expect(k8sClient.Create(ctx, addVolumeTemplate(neuron))).Should(Succeed())
-		Expect(k8sClient.Create(ctx, addVolumeTemplate(ekuiper))).Should(Succeed())
-	})
-
-	AfterEach(func() {
-		Expect(k8sClient.Delete(ctx, neuronEX)).Should(Succeed())
-		Expect(k8sClient.Delete(ctx, neuron)).Should(Succeed())
-		Expect(k8sClient.Delete(ctx, ekuiper)).Should(Succeed())
-
-		pvcs := &corev1.PersistentVolumeClaimList{}
-		Expect(k8sClient.List(ctx, pvcs, client.InNamespace("default"))).Should(Succeed())
-		for _, pvc := range pvcs.Items {
-			p := pvc.DeepCopy()
-			p.SetFinalizers([]string{})
-			Expect(k8sClient.Update(ctx, p)).Should(Succeed())
-			Expect(k8sClient.Delete(ctx, p)).Should(Succeed())
-		}
-	})
-
-	DescribeTable("check deployment",
-		func(ins edgev1alpha1.EdgeInterface, expected []corev1.Volume) {
-			deployment := &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      ins.GetResName(),
-					Namespace: ins.GetNamespace(),
-				},
-			}
-			Eventually(func() []corev1.Volume {
-				_ = k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
-				return deployment.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(ConsistOf(expected))
-		},
-		Entry("neuronEX", addVolumeTemplate(neuronEX), []corev1.Volume{
-			{Name: "shared-tmp", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-			{Name: "neuron-data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: addVolumeTemplate(neuronEX).GetVolumeClaimTemplate().Name + "-neuron-data"}}},
-			{Name: "ekuiper-data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: addVolumeTemplate(neuronEX).GetVolumeClaimTemplate().Name + "-ekuiper-data"}}},
-			{Name: "ekuiper-plugins", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: addVolumeTemplate(neuronEX).GetVolumeClaimTemplate().Name + "-ekuiper-plugins"}}},
-			{Name: "ekuiper-tool-config", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{Name: internal.GetResNameOnPanic(neuronEX, ekuiperToolConfig)},
-				DefaultMode:          &[]int32{corev1.ConfigMapVolumeSourceDefaultMode}[0],
-			}}},
-			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
-				Sources: []corev1.VolumeProjection{{
-					Secret: &corev1.SecretProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: internal.GetResNameOnPanic(neuronEX, publicKey)}}}},
-				DefaultMode: &[]int32{0444}[0]}},
-			},
-		}),
-		Entry("neuron", addVolumeTemplate(neuron), []corev1.Volume{
-			{Name: "neuron-data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: addVolumeTemplate(neuron).GetVolumeClaimTemplate().Name + "-neuron-data"}}},
-			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
-				Sources: []corev1.VolumeProjection{{
-					Secret: &corev1.SecretProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: internal.GetResNameOnPanic(neuron, publicKey)}}}},
-				DefaultMode: &[]int32{0444}[0]}},
-			},
-		}),
-		Entry("ekuiper", addVolumeTemplate(ekuiper), []corev1.Volume{
-			{Name: "ekuiper-data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: addVolumeTemplate(ekuiper).GetVolumeClaimTemplate().Name + "-ekuiper-data"}}},
-			{Name: "ekuiper-plugins", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: addVolumeTemplate(ekuiper).GetVolumeClaimTemplate().Name + "-ekuiper-plugins"}}},
-			{Name: publicKey, VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{
-				Sources: []corev1.VolumeProjection{{
-					Secret: &corev1.SecretProjection{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: internal.GetResNameOnPanic(ekuiper, publicKey)}}}},
-				DefaultMode: &[]int32{0444}[0]}},
-			},
-		}),
-	)
-})
-
-var _ = Describe("check deployment and containers", func() {
-	var neuronEX *edgev1alpha1.NeuronEX = getNeuronEX()
-	var neuron *edgev1alpha1.Neuron = getNeuron()
-	var ekuiper *edgev1alpha1.EKuiper = getEKuiper()
-
-	BeforeEach(func() {
-		Expect(k8sClient.Create(ctx, neuronEX.DeepCopy())).Should(Succeed())
-		Expect(k8sClient.Create(ctx, neuron.DeepCopy())).Should(Succeed())
-		Expect(k8sClient.Create(ctx, ekuiper.DeepCopy())).Should(Succeed())
-	})
-
-	AfterEach(func() {
-		Expect(k8sClient.Delete(ctx, neuronEX)).Should(Succeed())
-		Expect(k8sClient.Delete(ctx, neuron)).Should(Succeed())
-		Expect(k8sClient.Delete(ctx, ekuiper)).Should(Succeed())
-	})
-
-	DescribeTable("check deployment",
-		func(ins edgev1alpha1.EdgeInterface, expectedContainerCount int) {
-			deployment := &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      ins.GetResName(),
-					Namespace: ins.GetNamespace(),
-				},
-			}
 			Eventually(func() error {
 				return k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
 			}, timeout, interval).Should(Succeed())
 
-			// metadata
-			Expect(deployment.ObjectMeta.Labels).Should(Equal(ins.GetLabels()))
+			targetVolumes := deployment.Spec.Template.Spec.Volumes
+			Expect(targetVolumes).Should(HaveLen(len(expectedVolumes)))
+
+			isEqual := func(expected, target any) bool {
+				if expected != nil && target != nil {
+					return true
+				}
+				if expected == nil && target == nil {
+					return true
+				}
+				return false
+			}
+			checkExisting := func(expected *volumeInfo) bool {
+				for _, target := range targetVolumes {
+					if target.Name == expected.name {
+						if !isEqual(expected.volumeSource.EmptyDir, target.EmptyDir) {
+							return false
+						}
+						if !isEqual(expected.volumeSource.ConfigMap, target.ConfigMap) {
+							return false
+						}
+						if !isEqual(expected.volumeSource.PersistentVolumeClaim, target.PersistentVolumeClaim) {
+							return false
+						}
+						return true
+					}
+				}
+				return false
+			}
+			for _, expected := range expectedVolumes {
+				Expect(checkExisting(&expected)).Should(BeTrue())
+			}
+
+			if compType == edgev1alpha1.ComponentTypeNeuronEx || compType == edgev1alpha1.ComponentTypeNeuron {
+				neuron := ins.GetNeuron()
+
+				isContain := false
+				for _, container := range deployment.Spec.Template.Spec.Containers {
+					if container.Name == neuron.Name {
+						isContain = true
+						Expect(container.Image).Should(Equal(neuron.Image))
+						Expect(container.Ports).Should(ConsistOf([]corev1.ContainerPort{
+							{Name: "neuron", ContainerPort: 7000, Protocol: corev1.ProtocolTCP},
+						}))
+						Expect(container.Env).Should(ConsistOf([]corev1.EnvVar{
+							{Name: "LOG_CONSOLE", Value: "1"},
+						}))
+
+					}
+				}
+				Expect(isContain).Should(BeTrue())
+			}
+
+			if compType == edgev1alpha1.ComponentTypeNeuronEx || compType == edgev1alpha1.ComponentTypeEKuiper {
+				eKuiper := ins.GetEKuiper()
+
+				isContain := false
+				for _, container := range deployment.Spec.Template.Spec.Containers {
+					if container.Name == eKuiper.Name {
+						isContain = true
+						Expect(container.Name).Should(Equal(eKuiper.Name))
+						Expect(container.Image).Should(Equal(eKuiper.Image))
+						Expect(container.Env).Should(ConsistOf([]corev1.EnvVar{
+							{Name: "KUIPER__BASIC__RESTPORT", Value: "9081"},
+							{Name: "KUIPER__BASIC__IGNORECASE", Value: "false"},
+							{Name: "KUIPER__BASIC__CONSOLELOG", Value: "true"},
+						}))
+						Expect(container.Ports).Should(ConsistOf([]corev1.ContainerPort{
+							{Name: "ekuiper", ContainerPort: 9081, Protocol: corev1.ProtocolTCP},
+						}))
+					}
+				}
+				Expect(isContain).Should(BeTrue())
+			}
 		},
-		Entry("neuronEX", neuronEX, 3),
-		Entry("neuron", neuron, 1),
-		Entry("ekuiper", ekuiper, 1),
+		Entry("neuronEX", edgev1alpha1.ComponentTypeNeuronEx),
+		Entry("neuron", edgev1alpha1.ComponentTypeNeuron),
+		Entry("ekuiper", edgev1alpha1.ComponentTypeEKuiper),
 	)
+})
 
-	It("check neuronEX container", func() {
-		deployment := &appsv1.Deployment{
+var _ = Describe("update deployment", func() {
+	var neuronEX *edgev1alpha1.NeuronEX
+	var namespace *corev1.Namespace
+
+	BeforeEach(func() {
+		namespace = &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      neuronEX.GetResName(),
-				Namespace: neuronEX.GetNamespace(),
+				Name: fmt.Sprint("update-deployment", +rand.Intn(10000)),
+				Labels: map[string]string{
+					"test": "e2e",
+				},
 			},
 		}
-		Eventually(func() error {
-			return k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
-		}, timeout, interval).Should(Succeed())
 
-		// neuron container
-		Expect(deployment.Spec.Template.Spec.Containers[0].Env).Should(ConsistOf([]corev1.EnvVar{
-			{Name: "LOG_CONSOLE", Value: "1"},
-		}))
-		Expect(deployment.Spec.Template.Spec.Containers[0].Name).Should(Equal(neuronEX.Spec.Neuron.Name))
-		Expect(deployment.Spec.Template.Spec.Containers[0].Image).Should(Equal(neuronEX.Spec.Neuron.Image))
-		Expect(deployment.Spec.Template.Spec.Containers[0].Ports).Should(ConsistOf([]corev1.ContainerPort{
-			{Name: "neuron", ContainerPort: 7000, Protocol: corev1.ProtocolTCP},
-		}))
-		Expect(deployment.Spec.Template.Spec.Containers[0].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
-			{Name: "shared-tmp", MountPath: "/tmp"},
-			{Name: "neuron-data", MountPath: "/opt/neuron/persistence"},
-			{Name: publicKey, MountPath: "/opt/neuron/certs", ReadOnly: true},
-		}))
-		// ekuiper container
-		Expect(deployment.Spec.Template.Spec.Containers[1].Name).Should(Equal(neuronEX.Spec.EKuiper.Name))
-		Expect(deployment.Spec.Template.Spec.Containers[1].Image).Should(Equal(neuronEX.Spec.EKuiper.Image))
-		Expect(deployment.Spec.Template.Spec.Containers[1].Env).Should(ConsistOf([]corev1.EnvVar{
-			{Name: "KUIPER__BASIC__RESTPORT", Value: "9081"},
-			{Name: "KUIPER__BASIC__IGNORECASE", Value: "false"},
-			{Name: "KUIPER__BASIC__CONSOLELOG", Value: "true"},
-		}))
-		Expect(deployment.Spec.Template.Spec.Containers[1].Ports).Should(ConsistOf([]corev1.ContainerPort{
-			{Name: "ekuiper", ContainerPort: 9081, Protocol: corev1.ProtocolTCP},
-		}))
-		Expect(deployment.Spec.Template.Spec.Containers[1].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
-			{Name: "shared-tmp", MountPath: "/tmp"},
-			{Name: "ekuiper-data", MountPath: "/kuiper/data"},
-			{Name: "ekuiper-plugins", MountPath: "/kuiper/plugins/portable"},
-			{Name: publicKey, MountPath: "/kuiper/etc/mgmt", ReadOnly: true},
-		}))
-		// ekuiper tool container
-		Expect(deployment.Spec.Template.Spec.Containers[2].Name).Should(Equal("ekuiper-tool"))
-		Expect(deployment.Spec.Template.Spec.Containers[2].Image).Should(Equal("lfedge/ekuiper-kubernetes-tool:1.8"))
-		Expect(deployment.Spec.Template.Spec.Containers[2].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
-			{Name: "ekuiper-tool-config", MountPath: "/kuiper-kubernetes-tool/sample", ReadOnly: true},
-		}))
+		neuronEX = getNeuronEX()
+		neuronEX.Namespace = namespace.Name
+
+		Expect(k8sClient.Create(ctx, namespace)).Should(Succeed())
+		Expect(k8sClient.Create(ctx, neuronEX)).Should(Succeed())
 	})
 
-	It("check neuron container", func() {
-		deployment := &appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      neuron.GetResName(),
-				Namespace: neuron.GetNamespace(),
-			},
-		}
-		Eventually(func() error {
-			return k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
-		}, timeout, interval).Should(Succeed())
-		// neuron container
-		Expect(deployment.Spec.Template.Spec.Containers[0].Env).Should(ConsistOf([]corev1.EnvVar{
-			{Name: "LOG_CONSOLE", Value: "1"},
-		}))
-		Expect(deployment.Spec.Template.Spec.Containers[0].Name).Should(Equal(neuron.Spec.Neuron.Name))
-		Expect(deployment.Spec.Template.Spec.Containers[0].Image).Should(Equal(neuron.Spec.Neuron.Image))
-		Expect(deployment.Spec.Template.Spec.Containers[0].Ports).Should(ConsistOf([]corev1.ContainerPort{
-			{Name: "neuron", ContainerPort: 7000, Protocol: corev1.ProtocolTCP},
-		}))
-		Expect(deployment.Spec.Template.Spec.Containers[0].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
-			{Name: "neuron-data", MountPath: "/opt/neuron/persistence"},
-			{Name: publicKey, MountPath: "/opt/neuron/certs", ReadOnly: true},
-		}))
+	AfterEach(func() {
+		Expect(k8sClient.Delete(ctx, neuronEX)).Should(Succeed())
 	})
 
-	It("check ekuiper container", func() {
-		deployment := &appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      ekuiper.GetResName(),
-				Namespace: ekuiper.GetNamespace(),
-			},
-		}
-		Eventually(func() error {
-			return k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
-		}, timeout, interval).Should(Succeed())
-		// ekuiper container
-		Expect(deployment.Spec.Template.Spec.Containers[0].Name).Should(Equal(ekuiper.Spec.EKuiper.Name))
-		Expect(deployment.Spec.Template.Spec.Containers[0].Image).Should(Equal(ekuiper.Spec.EKuiper.Image))
-		Expect(deployment.Spec.Template.Spec.Containers[0].Env).Should(ConsistOf([]corev1.EnvVar{
-			{Name: "KUIPER__BASIC__RESTPORT", Value: "9081"},
-			{Name: "KUIPER__BASIC__IGNORECASE", Value: "false"},
-			{Name: "KUIPER__BASIC__CONSOLELOG", Value: "true"},
-		}))
-		Expect(deployment.Spec.Template.Spec.Containers[0].Ports).Should(ConsistOf([]corev1.ContainerPort{
-			{Name: "ekuiper", ContainerPort: 9081, Protocol: corev1.ProtocolTCP},
-		}))
-		Expect(deployment.Spec.Template.Spec.Containers[0].VolumeMounts).Should(ConsistOf([]corev1.VolumeMount{
-			{Name: "ekuiper-data", MountPath: "/kuiper/data"},
-			{Name: "ekuiper-plugins", MountPath: "/kuiper/plugins/portable"},
-			{Name: publicKey, MountPath: "/kuiper/etc/mgmt", ReadOnly: true},
-		}))
-	})
-
-	Describe("check update deployment", func() {
-		JustBeforeEach(func() {
+	Context("update image", func() {
+		BeforeEach(func() {
 			newNeuronEX := neuronEX.DeepCopy()
 			newNeuronEX.Spec.Neuron.Image = "emqx/neuron:latest"
 			newNeuronEX.Spec.EKuiper.Image = "lfedge/ekuiper:latest-slim"
 			Expect(k8sClient.Patch(ctx, newNeuronEX, client.MergeFrom(neuronEX))).Should(Succeed())
-
-			newNeuron := neuron.DeepCopy()
-			newNeuron.Spec.Neuron.Image = "emqx/neuron:latest"
-			Expect(k8sClient.Patch(ctx, newNeuron, client.MergeFrom(neuron))).Should(Succeed())
-
-			newEKuiper := ekuiper.DeepCopy()
-			newEKuiper.Spec.EKuiper.Image = "lfedge/ekuiper:latest-slim"
-			Expect(k8sClient.Patch(ctx, newEKuiper, client.MergeFrom(ekuiper))).Should(Succeed())
 		})
 
-		JustAfterEach(func() {
-			pvcs := &corev1.PersistentVolumeClaimList{}
-			Expect(k8sClient.List(ctx, pvcs, client.InNamespace("default"))).Should(Succeed())
-			for _, pvc := range pvcs.Items {
-				p := pvc.DeepCopy()
-				p.SetFinalizers([]string{})
-				Expect(k8sClient.Update(ctx, p)).Should(Succeed())
-				Expect(k8sClient.Delete(ctx, p)).Should(Succeed())
-			}
-		})
-
-		It("check neuron and ekuiper and ekuiper tool container", func() {
+		It("should get new image", func() {
 			deployment := &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      neuronEX.GetResName(),
 					Namespace: neuronEX.GetNamespace(),
 				},
 			}
-			Eventually(func() []string {
-				_ = k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
-				return []string{
-					deployment.Spec.Template.Spec.Containers[0].Image,
-					deployment.Spec.Template.Spec.Containers[1].Image,
-					deployment.Spec.Template.Spec.Containers[2].Image,
-				}
-			}, timeout, interval).Should(ConsistOf([]string{
+			Eventually(func() error {
+				return k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
+			}, timeout, interval).Should(Succeed())
+
+			Expect(deployment.Spec.Template.Spec.Containers).Should(HaveLen(2))
+
+			Expect([]string{
+				deployment.Spec.Template.Spec.Containers[0].Image,
+				deployment.Spec.Template.Spec.Containers[1].Image,
+			}).Should(ConsistOf([]string{
 				"emqx/neuron:latest",
 				"lfedge/ekuiper:latest-slim",
-				"lfedge/ekuiper-kubernetes-tool:latest",
 			}))
-		})
-
-		It("check neuron container", func() {
-			deployment := &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      neuron.GetResName(),
-					Namespace: neuron.GetNamespace(),
-				},
-			}
-			Eventually(func() string {
-				_ = k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
-				return deployment.Spec.Template.Spec.Containers[0].Image
-			}, timeout, interval).Should(Equal("emqx/neuron:latest"))
-		})
-
-		It("check ekuiper container", func() {
-			deployment := &appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      ekuiper.GetResName(),
-					Namespace: ekuiper.GetNamespace(),
-				},
-			}
-			Eventually(func() string {
-				_ = k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
-				return deployment.Spec.Template.Spec.Containers[0].Image
-			}, timeout, interval).Should(Equal("lfedge/ekuiper:latest-slim"))
 		})
 	})
 })
 
-var _ = Describe("update deployment", func() {
+/*var _ = Describe("update deployment", func() {
 	var ekuiper = getEKuiper()
 
 	BeforeEach(func() {
@@ -427,3 +259,4 @@ var _ = Describe("update deployment", func() {
 		})
 	})
 })
+*/

@@ -8,51 +8,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("check pvc when volume template not set", func() {
-	var neuronEX *edgev1alpha1.NeuronEX = getNeuronEX()
-	var neuron *edgev1alpha1.Neuron = getNeuron()
-	var ekuiper *edgev1alpha1.EKuiper = getEKuiper()
-
-	BeforeEach(func() {
-		Expect(k8sClient.Create(ctx, neuronEX.DeepCopy())).Should(Succeed())
-		Expect(k8sClient.Create(ctx, neuron.DeepCopy())).Should(Succeed())
-		Expect(k8sClient.Create(ctx, ekuiper.DeepCopy())).Should(Succeed())
-	})
-
-	AfterEach(func() {
-		Expect(k8sClient.Delete(ctx, neuronEX)).Should(Succeed())
-		Expect(k8sClient.Delete(ctx, neuron)).Should(Succeed())
-		Expect(k8sClient.Delete(ctx, ekuiper)).Should(Succeed())
-	})
-
-	DescribeTable("pvc should not created",
-		func(ins edgev1alpha1.EdgeInterface) {
-			list := &corev1.PersistentVolumeClaimList{}
-			Expect(k8sClient.List(ctx, list, client.InNamespace(ins.GetNamespace()), client.MatchingLabels(ins.GetLabels()))).Should(Succeed())
-			Expect(list.Items).Should(BeEmpty())
-		},
-		Entry("neuronEX", neuronEX),
-		Entry("neuron", neuron),
-		Entry("ekuiper", ekuiper),
-	)
-})
-
 var _ = Describe("check pvc when volume template set", func() {
-	var neuronEX *edgev1alpha1.NeuronEX = getNeuronEX()
-	var neuron *edgev1alpha1.Neuron = getNeuron()
-	var ekuiper *edgev1alpha1.EKuiper = getEKuiper()
-
-	BeforeEach(func() {
-		Expect(k8sClient.Create(ctx, addVolumeTemplate(neuronEX))).Should(Succeed())
-		Expect(k8sClient.Create(ctx, addVolumeTemplate(neuron))).Should(Succeed())
-		Expect(k8sClient.Create(ctx, addVolumeTemplate(ekuiper))).Should(Succeed())
-	})
-
-	AfterEach(func() {
-		Expect(k8sClient.Delete(ctx, neuronEX)).Should(Succeed())
-		Expect(k8sClient.Delete(ctx, neuron)).Should(Succeed())
-		Expect(k8sClient.Delete(ctx, ekuiper)).Should(Succeed())
-
+	deletePVC := func() {
 		pvcs := &corev1.PersistentVolumeClaimList{}
 		Expect(k8sClient.List(ctx, pvcs, client.InNamespace("default"))).Should(Succeed())
 		for _, pvc := range pvcs.Items {
@@ -61,14 +18,50 @@ var _ = Describe("check pvc when volume template set", func() {
 			Expect(k8sClient.Update(ctx, p)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, p)).Should(Succeed())
 		}
+	}
+
+	BeforeEach(func() {
+		deletePVC()
+	})
+
+	AfterEach(func() {
+		deletePVC()
 	})
 
 	DescribeTable("pvc should created",
-		func(ins edgev1alpha1.EdgeInterface, expected []string) {
-			pvcList := &corev1.PersistentVolumeClaimList{}
+		func(compType edgev1alpha1.ComponentType, expected []string) {
+			var ins edgev1alpha1.EdgeInterface
+			switch compType {
+			case edgev1alpha1.ComponentTypeEKuiper:
+				ins = getEKuiper()
+			case edgev1alpha1.ComponentTypeNeuron:
+				ins = getNeuron()
+			case edgev1alpha1.ComponentTypeNeuronEx:
+				ins = getNeuronEX()
+			}
 
+			defer func() {
+				Expect(k8sClient.Delete(ctx, ins)).Should(Succeed())
+			}()
+
+			By("create cr with no pvc")
+			Expect(k8sClient.Create(ctx, ins)).Should(Succeed())
+
+			pvcList := &corev1.PersistentVolumeClaimList{}
 			Eventually(func() []corev1.PersistentVolumeClaim {
-				_ = k8sClient.List(ctx, pvcList, client.InNamespace(ins.GetNamespace()), client.MatchingLabels(ins.GetLabels()))
+				err := k8sClient.List(ctx, pvcList, client.InNamespace(ins.GetNamespace()), client.MatchingLabels(ins.GetLabels()))
+				Expect(err).Should(Succeed())
+				return pvcList.Items
+			}, timeout, interval).Should(BeEmpty())
+
+			By("update cr with pvc")
+			insWithVolumes := addVolumeTemplate(ins)
+			Expect(k8sClient.Patch(ctx, insWithVolumes, client.MergeFrom(ins))).Should(Succeed())
+
+			pvcList = &corev1.PersistentVolumeClaimList{}
+			Eventually(func() []corev1.PersistentVolumeClaim {
+				err := k8sClient.List(ctx, pvcList, client.InNamespace(ins.GetNamespace()), client.MatchingLabels(ins.GetLabels()))
+				Expect(err).Should(Succeed())
 				return pvcList.Items
 			}, timeout, interval).Should(HaveLen(len(expected)))
 
@@ -80,17 +73,17 @@ var _ = Describe("check pvc when volume template set", func() {
 				Expect(pvc.Spec.AccessModes).Should(ConsistOf([]corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}))
 			}
 		},
-		Entry("neuronEX", addVolumeTemplate(neuronEX), []string{
-			neuronEX.GetResName() + "-neuron-data",
-			neuronEX.GetResName() + "-ekuiper-data",
-			neuronEX.GetResName() + "-ekuiper-plugins",
+		Entry("neuronEX", edgev1alpha1.ComponentTypeNeuronEx, []string{
+			"neuronex-neuronex-neuron-data",
+			"neuronex-neuronex-ekuiper-data",
+			"neuronex-neuronex-ekuiper-plugins",
 		}),
-		Entry("neuron", addVolumeTemplate(neuron), []string{
-			neuron.GetResName() + "-neuron-data",
+		Entry("neuron", edgev1alpha1.ComponentTypeNeuron, []string{
+			"neuron-neuron-neuron-data",
 		}),
-		Entry("ekuiper", addVolumeTemplate(ekuiper), []string{
-			ekuiper.GetResName() + "-ekuiper-data",
-			ekuiper.GetResName() + "-ekuiper-plugins",
+		Entry("ekuiper", edgev1alpha1.ComponentTypeEKuiper, []string{
+			"ekuiper-ekuiper-ekuiper-data",
+			"ekuiper-ekuiper-ekuiper-plugins",
 		}),
 	)
 })
