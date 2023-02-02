@@ -9,18 +9,17 @@ import (
 type mountTo = string
 
 const (
-	mountToNeuron      mountTo = "neuron"
-	mountToEkuiper     mountTo = "ekuiper"
-	mountToEkuiperTool mountTo = "ekuiper-tool"
+	mountToNeuron  mountTo = "neuron"
+	mountToEkuiper mountTo = "ekuiper"
 )
 
 const (
-	neuronData        = "neuron-data"
-	ekuiperData       = "ekuiper-data"
-	ekuiperPlugins    = "ekuiper-plugins"
-	ekuiperToolConfig = "ekuiper-tool-config"
-	sharedTmp         = "shared-tmp"
-	publicKey         = "public-key"
+	neuronData     = "neuron-data"
+	ekuiperData    = "ekuiper-data"
+	ekuiperPlugins = "ekuiper-plugins"
+	ekuiperRuleSet = "ekuiper-init-rule-set"
+	sharedTmp      = "shared-tmp"
+	publicKey      = "public-key"
 )
 
 type mountAttr struct {
@@ -116,21 +115,21 @@ func getEKuiperPluginsVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
 	return v
 }
 
-func getEkuiperToolConfigVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
+func getEkuiperInitRuleSetVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
 	return volumeInfo{
-		name: ekuiperToolConfig,
+		name: ekuiperRuleSet,
 		mounts: map[mountTo]mountAttr{
-			mountToEkuiperTool: {
-				path:     "/kuiper-kubernetes-tool/sample",
+			mountToEkuiper: {
+				path:     "/kuiper/data/init.json",
 				readOnly: true,
 			},
 		},
 		volumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: internal.GetResNameOnPanic(ins, ekuiperToolConfig),
+					Name: internal.GetResNameOnPanic(ins, ekuiperRuleSet),
 				},
-				DefaultMode: &[]int32{corev1.ConfigMapVolumeSourceDefaultMode}[0],
+				DefaultMode: &[]int32{0444}[0],
 			},
 		},
 	}
@@ -160,7 +159,7 @@ func getVolumeList(ins edgev1alpha1.EdgeInterface) []volumeInfo {
 			getNeuronDataVol(ins),
 			getEKuiperDataVol(ins),
 			getEKuiperPluginsVol(ins),
-			getEkuiperToolConfigVol(ins),
+			getEkuiperInitRuleSetVol(ins),
 			getShardTmpVol(),
 			getSecretVol(ins),
 		}

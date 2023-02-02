@@ -86,7 +86,7 @@ func (ec *EdgeController) reconcile(ctx context.Context, req ctrl.Request, cr cl
 	default:
 		subs := []subReconciler[*edgev1alpha1.NeuronEX]{
 			updateNeuronEXStatus{},
-			addEkuiperTool{},
+			addRuleSet{},
 			addNeuronExPVC{},
 			addNeuronExSecret{},
 			addNeuronExDeploy{},

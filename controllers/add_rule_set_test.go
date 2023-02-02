@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"github.com/emqx/edge-operator/internal"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -10,8 +9,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("basic test", Label("basic"), func() {
-	var neuronEX *edgev1alpha1.NeuronEX = getNeuronEX()
+var _ = Describe("add eKuiper rule set", func() {
+	var neuronEX = getNeuronEX()
 
 	BeforeEach(func() {
 		Expect(k8sClient.Create(ctx, neuronEX.DeepCopy())).Should(Succeed())
@@ -24,7 +23,7 @@ var _ = Describe("basic test", Label("basic"), func() {
 	It("should create configMap", func() {
 		configMap := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      internal.GetResNameOnPanic(neuronEX, ekuiperToolConfig),
+				Name:      internal.GetResNameOnPanic(neuronEX, ekuiperRuleSet),
 				Namespace: neuronEX.Namespace,
 			},
 		}
@@ -36,6 +35,6 @@ var _ = Describe("basic test", Label("basic"), func() {
 		Expect(configMap.ObjectMeta.Labels).Should(Equal(neuronEX.Labels))
 		Expect(configMap.ObjectMeta.Annotations).Should(HaveKeyWithValue("foo", "bar"))
 		// data
-		Expect(configMap.Data).Should(HaveKey("neuronStream.json"))
+		Expect(configMap.Data).Should(HaveKey("init.json"))
 	})
 })
