@@ -40,7 +40,7 @@ help: ## Display this help.
 
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd:maxDescLen=0,generateEmbeddedObjectMeta=true webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) crd:maxDescLen=0,generateEmbeddedObjectMeta=true rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -72,8 +72,18 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
-docker-build: test ## Build docker image with the manager.
+docker-build: ## Build docker image with the manager.
 	docker build -t ${IMG} .
+
+helm-crds: manifests kustomize ## build CRDs to helm template
+	$(KUSTOMIZE) build config/crd > deploy/charts/edge-operator/templates/crds.yaml
+
+	yq -i '.metadata.annotations."cert-manager.io/inject-ca-from" = "{{ .Release.Namespace }}/{{ include \"edge-operator.fullname\" . }}-serving-cert"' deploy/charts/edge-operator/templates/crds.yaml
+	yq -i '.spec.conversion.webhook.clientConfig.service.name= "{{ include \"edge-operator.fullname\" . }}-webhook-service"' deploy/charts/edge-operator/templates/crds.yaml
+	yq -i '.spec.conversion.webhook.clientConfig.service.namespace = "{{ .Release.Namespace }}"' deploy/charts/edge-operator/templates/crds.yaml
+
+	sed -i '1i {{- if not .Values.skipCRDs }}\n' deploy/charts/edge-operator/templates/crds.yaml
+	echo -e '\n{{- end }}' >> deploy/charts/edge-operator/templates/crds.yaml
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.

@@ -86,7 +86,7 @@ func (r *NeuronEX) ValidateUpdate(old runtime.Object) error {
 		}
 	}
 
-	return nil
+ return nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type

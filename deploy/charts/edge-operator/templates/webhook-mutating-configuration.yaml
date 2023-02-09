@@ -1,0 +1,28 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "edge-operator.fullname" . }}-serving-cert
+  name: {{ include "edge-operator.fullname" . }}-mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "edge-operator.fullname" . }}-webhook-service
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-edge-emqx-io-v1alpha1-neuronex
+  failurePolicy: Fail
+  name: mutate.neuronex.edge.emqx.io
+  rules:
+  - apiGroups:
+    - edge.emqx.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - neuronexs
+  sideEffects: None
