@@ -194,16 +194,20 @@ var _ = Describe("update deployment", func() {
 					Namespace: neuronEX.GetNamespace(),
 				},
 			}
-			Eventually(func() error {
-				return k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
-			}, timeout, interval).Should(Succeed())
+			Eventually(func() []string {
+				err := k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)
+				if err != nil {
+					return nil
+				}
+				if len(deployment.Spec.Template.Spec.Containers) != 2 {
+					return nil
+				}
 
-			Expect(deployment.Spec.Template.Spec.Containers).Should(HaveLen(2))
-
-			Expect([]string{
-				deployment.Spec.Template.Spec.Containers[0].Image,
-				deployment.Spec.Template.Spec.Containers[1].Image,
-			}).Should(ConsistOf([]string{
+				return []string{
+					deployment.Spec.Template.Spec.Containers[0].Image,
+					deployment.Spec.Template.Spec.Containers[1].Image,
+				}
+			}, timeout, interval).Should(ConsistOf([]string{
 				"emqx/neuron:latest",
 				"lfedge/ekuiper:latest-slim",
 			}))
