@@ -2,7 +2,7 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: ekuiper.edge.emqx.io
+  name: ekuipers.edge.emqx.io
 spec:
   conversion:
     strategy: Webhook

@@ -1,6 +1,7 @@
 
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+# IMG ?= controller:latest
+IMG ?= brianbinbin/edge-operator-controller:0.0.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.25.0
 
@@ -72,7 +73,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
-docker-build: ## Build docker image with the manager.
+docker-build: test ## Build docker image with the manager.
 	docker build -t ${IMG} .
 
 helm-crds: manifests kustomize ## build CRDs to helm template
