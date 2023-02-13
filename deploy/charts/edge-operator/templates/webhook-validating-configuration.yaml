@@ -10,8 +10,50 @@ webhooks:
   - v1
   clientConfig:
     service:
-      name: webhook-service
-      namespace: system
+      name: {{ include "edge-operator.fullname" . }}-webhook-service
+      namespace: {{ .Release.Namespace }}
+      path: /validate-edge-emqx-io-v1alpha1-ekuiper
+  failurePolicy: Fail
+  name: validate.ekuiper.edge.emqx.io
+  rules:
+  - apiGroups:
+    - edge.emqx.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - ekuipers
+    scope: '*'
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "edge-operator.fullname" . }}-webhook-service
+      namespace: {{ .Release.Namespace }}
+      path: /validate-edge-emqx-io-v1alpha1-neuron
+  failurePolicy: Fail
+  name: validate.neuron.edge.emqx.io
+  rules:
+  - apiGroups:
+    - edge.emqx.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - neurons
+    scope: '*'
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "edge-operator.fullname" . }}-webhook-service
+      namespace: {{ .Release.Namespace }}
       path: /validate-edge-emqx-io-v1alpha1-neuronex
   failurePolicy: Fail
   name: validate.neuronex.edge.emqx.io
@@ -25,4 +67,5 @@ webhooks:
     - UPDATE
     resources:
     - neuronexs
+    scope: '*'
   sideEffects: None

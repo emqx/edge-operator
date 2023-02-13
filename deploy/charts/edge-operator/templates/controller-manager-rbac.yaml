@@ -147,9 +147,62 @@ rules:
 - apiGroups:
   - edge.emqx.io
   resources:
+  - ekuipers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - edge.emqx.io
+  resources:
+  - ekuipers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - edge.emqx.io
+  resources:
+  - ekuipers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - edge.emqx.io
+  resources:
+  - neurons
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - edge.emqx.io
+  resources:
+  - neurons/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - edge.emqx.io
+  resources:
+  - neurons/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - edge.emqx.io
+  resources:
   - neuronexs
   verbs:
   - create
+  - delete
   - get
   - list
   - patch

@@ -7,7 +7,7 @@ skipCRDs: false
 replicaCount: 1
 
 image:
-  repository: brianbinbin/edge-operator-controller
+  repository: emqx/edge-operator-controller
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""

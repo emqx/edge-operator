@@ -12,6 +12,50 @@ webhooks:
     service:
       name: {{ include "edge-operator.fullname" . }}-webhook-service
       namespace: {{ .Release.Namespace }}
+      path: /mutate-edge-emqx-io-v1alpha1-ekuiper
+  failurePolicy: Fail
+  name: mutate.ekuiper.edge.emqx.io
+  rules:
+  - apiGroups:
+    - edge.emqx.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - ekuipers
+    scope: '*'
+  sideEffects: None
+  timeoutSeconds: 10
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "edge-operator.fullname" . }}-webhook-service
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-edge-emqx-io-v1alpha1-neuron
+  failurePolicy: Fail
+  name: mutate.neuron.edge.emqx.io
+  rules:
+  - apiGroups:
+    - edge.emqx.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - neurons
+    scope: '*'
+  sideEffects: None
+  timeoutSeconds: 10
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: {{ include "edge-operator.fullname" . }}-webhook-service
+      namespace: {{ .Release.Namespace }}
       path: /mutate-edge-emqx-io-v1alpha1-neuronex
   failurePolicy: Fail
   name: mutate.neuronex.edge.emqx.io
@@ -25,4 +69,6 @@ webhooks:
     - UPDATE
     resources:
     - neuronexs
+    scope: '*'
   sideEffects: None
+  timeoutSeconds: 10
