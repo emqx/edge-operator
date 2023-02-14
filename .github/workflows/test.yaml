@@ -64,6 +64,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        install:
+          - static
+          - helm
         file:
           - "config/samples/edge_v1alpha1_ekuiper.yaml"
           - "config/samples/edge_v1alpha1_neuron.yaml"
@@ -89,11 +92,19 @@ jobs:
           IMG: "emqx/edge-operator-controller:${{ github.sha }}"
         run: eval $(minikube docker-env) && docker build -t $IMG .
       - name: Deploy controller
+        if: matrix.install == 'static'
         env:
           IMG: "emqx/edge-operator-controller:${{ github.sha }}"
         run: |
           make install
           make deploy
+      - name: Deploy controller
+        if: matrix.install == 'helm'
+        run: |
+          helm install edge-operator deploy/charts/edge-operator \
+            --set image.tag=${{ github.sha }} \
+            --namespace edge-operator-system \
+            --create-namespace
       - run: kubectl wait --for=condition=Ready pods -l "edge.emqx.io/name=edge-operator" -n edge-operator-system --timeout=60s
       - name: Get metadata
         id: meta
