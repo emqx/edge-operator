@@ -49,6 +49,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- define "edge-operator.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "edge-operator.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+edge.emqx.io/name: {{ include "edge-operator.name" . }}
 {{- end }}
 
 {{/*
