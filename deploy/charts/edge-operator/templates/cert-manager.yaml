@@ -1,0 +1,24 @@
+{{- if (index .Values "cert-manager" "enable") }}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "edge-operator.fullname" . }}-selfsigned-issuer
+  namespace: {{ .Release.Namespace }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "edge-operator.fullname" . }}-serving-cert
+  namespace: {{ .Release.Namespace }}
+spec:
+  dnsNames:
+  - {{ include "edge-operator.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc
+  - {{ include "edge-operator.fullname" . }}-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: {{ include "edge-operator.fullname" . }}-selfsigned-issuer
+  secretName: {{ index .Values "cert-manager" "secretName" | default (printf "%s-webhook-server-cert" (include "edge-operator.fullname" .)) }}
+{{- end }}
