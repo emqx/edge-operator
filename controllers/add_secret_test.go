@@ -47,11 +47,11 @@ var _ = Describe("add secret", func() {
 	publicKeys := []edgev1alpha1.PublicKey{
 		{
 			Name: "sample-file",
-			Data: "base64encodingData",
+			Data: []byte("base64encodingData"),
 		},
 		{
 			Name: "sample-file2",
-			Data: "base64encodingData",
+			Data: []byte("base64encodingData"),
 		},
 	}
 
@@ -91,7 +91,7 @@ var _ = Describe("add secret", func() {
 
 			for i := range publicKeys {
 				Expect(secret.Data).Should(
-					HaveKeyWithValue(publicKeys[i].Name, []byte(publicKeys[i].Data)))
+					HaveKeyWithValue(publicKeys[i].Name, publicKeys[i].Data))
 			}
 		},
 		Entry("neuronEX", neuronEX, publicKeys),
