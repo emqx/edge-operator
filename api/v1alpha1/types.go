@@ -323,5 +323,5 @@ type PublicKey struct {
 	Name string `json:"name"`
 	// the JWTSecret that encoding in base64
 	// +kubebuilder:validation:Required
-	Data string `json:"data"`
+	Data []byte `json:"data"`
 }

@@ -43,7 +43,7 @@ func addSecret(ctx context.Context, r *EdgeController, ins edgev1alpha1.EdgeInte
 	publicKeys := ins.GetEdgePodSpec().PublicKeys
 	for i := range publicKeys {
 		pk := &publicKeys[i]
-		secret.Data[pk.Name] = []byte(pk.Data)
+		secret.Data[pk.Name] = pk.Data
 	}
 	if err := r.createOrUpdate(ctx, ins, &secret, logger); err != nil {
 		return &requeue{curError: err}
