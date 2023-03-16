@@ -32,7 +32,7 @@ var _ = Describe("basic test", func() {
 			By("update deployment readyReplicas for target controller reconcile")
 			deployment := &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      ins.GetResName(),
+					Name:      ins.GetName(),
 					Namespace: ins.GetNamespace(),
 				},
 			}

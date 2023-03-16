@@ -276,7 +276,7 @@ func TestDefault(t *testing.T) {
 				},
 			})
 			got.Default()
-			assert.Equal(t, got.GetResName(), got.GetVolumeClaimTemplate().Name)
+			assert.Equal(t, got.GetName(), got.GetVolumeClaimTemplate().Name)
 			assert.Equal(t, got.GetNamespace(), got.GetVolumeClaimTemplate().Namespace)
 			assert.Equal(t, map[string]string{
 				"foo":        "bar",
@@ -305,7 +305,7 @@ func TestDefault(t *testing.T) {
 				},
 			})
 			got.Default()
-			assert.Equal(t, got.GetResName(), got.GetServiceTemplate().Name)
+			assert.Equal(t, got.GetName(), got.GetServiceTemplate().Name)
 			assert.Equal(t, got.GetNamespace(), got.GetServiceTemplate().Namespace)
 			assert.Equal(t, map[string]string{
 				"foo":        "bar",

@@ -17,8 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -36,10 +34,6 @@ type EKuiperSpec struct {
 
 func (ek *EKuiper) GetComponentType() ComponentType {
 	return ComponentTypeEKuiper
-}
-
-func (ek *EKuiper) GetResName() string {
-	return fmt.Sprintf("%s-%s", ek.GetName(), ComponentTypeEKuiper)
 }
 
 func (ek *EKuiper) GetEdgePodSpec() EdgePodSpec {

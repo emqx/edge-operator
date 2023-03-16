@@ -31,7 +31,6 @@ type EdgeInterface interface {
 	ValidateDelete() error
 
 	GetComponentType() ComponentType
-	GetResName() string
 
 	GetEdgePodSpec() EdgePodSpec
 	GetNeuron() *corev1.Container
