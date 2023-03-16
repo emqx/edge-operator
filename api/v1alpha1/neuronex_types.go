@@ -17,8 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -38,10 +36,6 @@ type NeuronEXSpec struct {
 
 func (n *NeuronEX) GetComponentType() ComponentType {
 	return ComponentTypeNeuronEx
-}
-
-func (n *NeuronEX) GetResName() string {
-	return fmt.Sprintf("%s-%s", n.GetName(), ComponentTypeNeuronEx)
 }
 
 func (n *NeuronEX) GetEdgePodSpec() EdgePodSpec {

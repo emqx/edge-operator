@@ -41,7 +41,7 @@ func updateStatus(ctx context.Context, r *EdgeController, instance edgev1alpha1.
 	deploy := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: instance.GetNamespace(),
-			Name:      instance.GetResName(),
+			Name:      instance.GetName(),
 		},
 	}
 

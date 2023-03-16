@@ -74,16 +74,16 @@ var _ = Describe("check pvc when volume template set", func() {
 			}
 		},
 		Entry("neuronEX", edgev1alpha1.ComponentTypeNeuronEx, []string{
-			"neuronex-neuronex-neuron-data",
-			"neuronex-neuronex-ekuiper-data",
-			"neuronex-neuronex-ekuiper-plugins",
+			"neuronex-neuron-data",
+			"neuronex-ekuiper-data",
+			"neuronex-ekuiper-plugins",
 		}),
 		Entry("neuron", edgev1alpha1.ComponentTypeNeuron, []string{
-			"neuron-neuron-neuron-data",
+			"neuron-neuron-data",
 		}),
 		Entry("ekuiper", edgev1alpha1.ComponentTypeEKuiper, []string{
-			"ekuiper-ekuiper-ekuiper-data",
-			"ekuiper-ekuiper-ekuiper-plugins",
+			"ekuiper-ekuiper-data",
+			"ekuiper-ekuiper-plugins",
 		}),
 	)
 })

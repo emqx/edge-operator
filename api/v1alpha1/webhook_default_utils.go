@@ -170,7 +170,7 @@ func setDefaultVolume(ins EdgeInterface) {
 		return
 	}
 	if vol.Name == "" {
-		vol.Name = ins.GetResName()
+		vol.Name = ins.GetName()
 	}
 	vol.Namespace = ins.GetNamespace()
 	mergeLabels(vol, ins)
@@ -184,7 +184,7 @@ func setDefaultService(ins EdgeInterface) {
 	}
 
 	if svc.Name == "" {
-		svc.Name = ins.GetResName()
+		svc.Name = ins.GetName()
 	}
 
 	svc.Namespace = ins.GetNamespace()
