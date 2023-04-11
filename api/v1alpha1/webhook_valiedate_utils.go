@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"errors"
 	"reflect"
-	"strings"
 )
 
 func validateNeuronContainer(ins EdgeInterface) error {
@@ -13,19 +12,6 @@ func validateNeuronContainer(ins EdgeInterface) error {
 		return errors.New("neuron container image is empty")
 	}
 
-	return nil
-}
-
-func validateEKuiperContainer(ins EdgeInterface) error {
-	ekuiper := ins.GetEKuiper()
-
-	if ekuiper.Image == "" {
-		return errors.New("ekuiper container image is empty")
-	}
-
-	if !strings.HasSuffix(ekuiper.Image, "-slim-python") && !strings.HasSuffix(ekuiper.Image, "-slim") {
-		return errors.New("ekuiper container image must be slim or slim-python")
-	}
 	return nil
 }
 
