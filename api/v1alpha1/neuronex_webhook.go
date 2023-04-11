@@ -59,7 +59,6 @@ func (r *NeuronEX) ValidateCreate() error {
 
 	for _, err := range []error{
 		validateNeuronContainer(r),
-		validateEKuiperContainer(r),
 		validateVolumeTemplateCreate(r),
 	} {
 		if err != nil {
@@ -77,7 +76,6 @@ func (r *NeuronEX) ValidateUpdate(old runtime.Object) error {
 
 	for _, err := range []error{
 		validateNeuronContainer(r),
-		validateEKuiperContainer(r),
 		validateVolumeTemplateUpdate(r, old.(*NeuronEX)),
 	} {
 		if err != nil {

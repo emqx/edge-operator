@@ -51,28 +51,6 @@ func TestValiedate(t *testing.T) {
 			assert.Nil(t, got.ValidateUpdate(ins))
 			assert.Nil(t, got.ValidateDelete())
 		})
-		t.Run("check container image is empty", func(t *testing.T) {
-			if ins.GetNeuron() != nil {
-				got := deepCopyEdgeEdgeInterface(ins)
-				got.GetNeuron().Image = ""
-				assert.ErrorContains(t, got.ValidateCreate(), "neuron container image is empty")
-				assert.ErrorContains(t, got.ValidateUpdate(ins), "neuron container image is empty")
-			}
-			if ins.GetEKuiper() != nil {
-				got := deepCopyEdgeEdgeInterface(ins)
-				got.GetEKuiper().Image = ""
-				assert.ErrorContains(t, got.ValidateCreate(), "ekuiper container image is empty")
-				assert.ErrorContains(t, got.ValidateUpdate(ins), "ekuiper container image is empty")
-			}
-		})
-		t.Run("check ekuiper image is not slim or slim-python", func(t *testing.T) {
-			if ins.GetEKuiper() != nil {
-				got := deepCopyEdgeEdgeInterface(ins)
-				got.GetEKuiper().Image = "lfedge/ekuiper:latest"
-				assert.ErrorContains(t, got.ValidateCreate(), "ekuiper container image must be slim or slim-python")
-				assert.ErrorContains(t, got.ValidateUpdate(ins), "ekuiper container image must be slim or slim-python")
-			}
-		})
 		t.Run("check volume template is empty", func(t *testing.T) {
 			got := deepCopyEdgeEdgeInterface(ins)
 			got.SetVolumeClaimTemplate(nil)

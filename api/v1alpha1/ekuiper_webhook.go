@@ -58,7 +58,6 @@ func (r *EKuiper) ValidateCreate() error {
 	ekuiperlog.Info("validate create", "name", r.Name)
 
 	for _, err := range []error{
-		validateEKuiperContainer(r),
 		validateVolumeTemplateCreate(r),
 	} {
 		if err != nil {
@@ -75,7 +74,6 @@ func (r *EKuiper) ValidateUpdate(old runtime.Object) error {
 	ekuiperlog.Info("validate update", "name", r.Name)
 
 	for _, err := range []error{
-		validateEKuiperContainer(r),
 		validateVolumeTemplateUpdate(r, old.(*EKuiper)),
 	} {
 		if err != nil {
