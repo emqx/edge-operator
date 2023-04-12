@@ -12,7 +12,6 @@ spec:
 #  publicKeys:
 #  - name: sample-secret
 #    data: base64encode
-  replicas: 1
 
   ekuiper:
     name: "ekuiper"
