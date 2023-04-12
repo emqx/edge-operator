@@ -13,6 +13,8 @@ spec:
 #    - name: sample-secret
 #      data: base64encode
 
+  replicas: 1
+
   volumeClaimTemplate: ## optional
     metadata:
       name: neuron-sample
