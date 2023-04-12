@@ -28,8 +28,11 @@ import (
 type NeuronSpec struct {
 	EdgePodSpec `json:",inline"`
 
-	Neuron corev1.Container `json:"neuron,omitempty"`
-
+	//+kubebuilder:default:=1
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:validation:Maximum=1
+	Replicas            *int32                                `json:"replicas,omitempty"`
+	Neuron              corev1.Container                      `json:"neuron,omitempty"`
 	ServiceTemplate     *corev1.Service                       `json:"serviceTemplate,omitempty"`
 	VolumeClaimTemplate *corev1.PersistentVolumeClaimTemplate `json:"volumeClaimTemplate,omitempty"`
 }
@@ -64,6 +67,14 @@ func (n *Neuron) SetServiceTemplate(svc *corev1.Service) {
 	n.Spec.ServiceTemplate = svc
 }
 
+func (n *Neuron) GetReplicas() *int32 {
+	return n.Spec.Replicas
+}
+
+func (n *Neuron) SetReplicas(replicas int32) {
+	n.Spec.Replicas = &replicas
+}
+
 // NeuronStatus defines the observed state of Neuron
 type NeuronStatus struct {
 	EdgeStatus `json:",inline"`
@@ -79,6 +90,7 @@ func (n *Neuron) SetStatus(status *EdgeStatus) {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas
 
 // Neuron is the Schema for the neurons API
 type Neuron struct {

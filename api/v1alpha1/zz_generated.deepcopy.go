@@ -89,6 +89,11 @@ func (in *EKuiperList) DeepCopyObject() runtime.Object {
 func (in *EKuiperSpec) DeepCopyInto(out *EKuiperSpec) {
 	*out = *in
 	in.EdgePodSpec.DeepCopyInto(&out.EdgePodSpec)
+	if in.Replicas != nil {
+		in, out := &in.Replicas, &out.Replicas
+		*out = new(int32)
+		**out = **in
+	}
 	in.EKuiper.DeepCopyInto(&out.EKuiper)
 	if in.VolumeClaimTemplate != nil {
 		in, out := &in.VolumeClaimTemplate, &out.VolumeClaimTemplate
@@ -391,6 +396,11 @@ func (in *NeuronEXList) DeepCopyObject() runtime.Object {
 func (in *NeuronEXSpec) DeepCopyInto(out *NeuronEXSpec) {
 	*out = *in
 	in.EdgePodSpec.DeepCopyInto(&out.EdgePodSpec)
+	if in.Replicas != nil {
+		in, out := &in.Replicas, &out.Replicas
+		*out = new(int32)
+		**out = **in
+	}
 	in.Neuron.DeepCopyInto(&out.Neuron)
 	in.EKuiper.DeepCopyInto(&out.EKuiper)
 	if in.VolumeClaimTemplate != nil {
@@ -467,6 +477,11 @@ func (in *NeuronList) DeepCopyObject() runtime.Object {
 func (in *NeuronSpec) DeepCopyInto(out *NeuronSpec) {
 	*out = *in
 	in.EdgePodSpec.DeepCopyInto(&out.EdgePodSpec)
+	if in.Replicas != nil {
+		in, out := &in.Replicas, &out.Replicas
+		*out = new(int32)
+		**out = **in
+	}
 	in.Neuron.DeepCopyInto(&out.Neuron)
 	if in.ServiceTemplate != nil {
 		in, out := &in.ServiceTemplate, &out.ServiceTemplate

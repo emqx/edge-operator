@@ -44,6 +44,9 @@ type EdgeInterface interface {
 
 	GetStatus() EdgeStatus
 	SetStatus(status *EdgeStatus)
+
+	GetReplicas() *int32
+	SetReplicas(replicas int32)
 }
 
 // +kubebuilder:object:generate=true
