@@ -53,7 +53,7 @@ func getDeployment(instance edgev1alpha1.EdgeInterface) appsv1.Deployment {
 	deploy := appsv1.Deployment{
 		ObjectMeta: internal.GetObjectMetadata(instance, instance.GetName()),
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &[]int32{1}[0],
+			Replicas: instance.GetReplicas(),
 			Strategy: appsv1.DeploymentStrategy{
 				Type: appsv1.RecreateDeploymentStrategyType,
 			},

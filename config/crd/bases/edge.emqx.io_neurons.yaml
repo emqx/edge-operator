@@ -2344,6 +2344,12 @@ spec:
                   - conditionType
                   type: object
                 type: array
+              replicas:
+                default: 1
+                format: int32
+                maximum: 1
+                minimum: 0
+                type: integer
               restartPolicy:
                 type: string
               runtimeClassName:
@@ -3454,4 +3460,7 @@ spec:
     served: true
     storage: true
     subresources:
+      scale:
+        specReplicasPath: .spec.replicas
+        statusReplicasPath: .status.replicas
       status: {}

@@ -26,7 +26,12 @@ import (
 
 // EKuiperSpec defines the desired state of EKuiper
 type EKuiperSpec struct {
-	EdgePodSpec         `json:",inline"`
+	EdgePodSpec `json:",inline"`
+
+	//+kubebuilder:default:=1
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:validation:Maximum=1
+	Replicas            *int32                                `json:"replicas,omitempty"`
 	EKuiper             corev1.Container                      `json:"ekuiper,omitempty"`
 	VolumeClaimTemplate *corev1.PersistentVolumeClaimTemplate `json:"volumeClaimTemplate,omitempty"`
 	ServiceTemplate     *corev1.Service                       `json:"serviceTemplate,omitempty"`
@@ -62,6 +67,14 @@ func (ek *EKuiper) SetServiceTemplate(svc *corev1.Service) {
 	ek.Spec.ServiceTemplate = svc
 }
 
+func (ek *EKuiper) GetReplicas() *int32 {
+	return ek.Spec.Replicas
+}
+
+func (ek *EKuiper) SetReplicas(replicas int32) {
+	ek.Spec.Replicas = &replicas
+}
+
 // EKuiperStatus defines the observed state of EKuiper
 type EKuiperStatus struct {
 	EdgeStatus `json:",inline"`
@@ -77,6 +90,7 @@ func (n *EKuiper) SetStatus(status *EdgeStatus) {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas
 
 // EKuiper is the Schema for the ekuipers API
 type EKuiper struct {

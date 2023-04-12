@@ -27,9 +27,12 @@ import (
 type NeuronEXSpec struct {
 	EdgePodSpec `json:",inline"`
 
-	Neuron  corev1.Container `json:"neuron,omitempty"`
-	EKuiper corev1.Container `json:"ekuiper,omitempty"`
-
+	//+kubebuilder:default:=1
+	//+kubebuilder:validation:Minimum=0
+	//+kubebuilder:validation:Maximum=1
+	Replicas            *int32                                `json:"replicas,omitempty"`
+	Neuron              corev1.Container                      `json:"neuron,omitempty"`
+	EKuiper             corev1.Container                      `json:"ekuiper,omitempty"`
 	VolumeClaimTemplate *corev1.PersistentVolumeClaimTemplate `json:"volumeClaimTemplate,omitempty"`
 	ServiceTemplate     *corev1.Service                       `json:"serviceTemplate,omitempty"`
 }
@@ -64,6 +67,14 @@ func (n *NeuronEX) SetServiceTemplate(svc *corev1.Service) {
 	n.Spec.ServiceTemplate = svc
 }
 
+func (n *NeuronEX) GetReplicas() *int32 {
+	return n.Spec.Replicas
+}
+
+func (n *NeuronEX) SetReplicas(replicas int32) {
+	n.Spec.Replicas = &replicas
+}
+
 // NeuronEXStatus defines the observed state of NeuronEX
 type NeuronEXStatus struct {
 	EdgeStatus `json:",inline"`
@@ -80,6 +91,7 @@ func (n *NeuronEX) SetStatus(status *EdgeStatus) {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:path=neuronexs,shortName=nex
+//+kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas
 
 // NeuronEX is the Schema for the neuronexs API
 type NeuronEX struct {
