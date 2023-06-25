@@ -15,6 +15,7 @@ const (
 
 const (
 	neuronData     = "neuron-data"
+	ekuiper        = "ekuiper"
 	ekuiperData    = "ekuiper-data"
 	ekuiperPlugins = "ekuiper-plugins"
 	ekuiperRuleSet = "ekuiper-init-rule-set"
@@ -25,6 +26,7 @@ const (
 type mountAttr struct {
 	path     string
 	readOnly bool
+	subPath  string
 }
 
 type volumeInfo struct {
@@ -91,26 +93,28 @@ func getNeuronDataVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
 
 func getEKuiperDataVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
 	v := volumeInfo{
-		name: ekuiperData,
+		name: ekuiper,
 		mounts: map[mountTo]mountAttr{
 			mountToEkuiper: {
-				path: "/kuiper/data",
+				path:    "/kuiper/data",
+				subPath: "data",
 			},
 		},
-		volumeSource: getPersistentVolumeSource(ins, ekuiperData),
+		volumeSource: getPersistentVolumeSource(ins, ekuiper),
 	}
 	return v
 }
 
 func getEKuiperPluginsVol(ins edgev1alpha1.EdgeInterface) volumeInfo {
 	v := volumeInfo{
-		name: ekuiperPlugins,
+		name: ekuiper,
 		mounts: map[mountTo]mountAttr{
 			mountToEkuiper: {
-				path: "/kuiper/plugins/portable",
+				path:    "/kuiper/plugins/portable",
+				subPath: "plugins/portable",
 			},
 		},
-		volumeSource: getPersistentVolumeSource(ins, ekuiperPlugins),
+		volumeSource: getPersistentVolumeSource(ins, ekuiper),
 	}
 	return v
 }
