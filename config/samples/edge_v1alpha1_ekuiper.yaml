@@ -14,7 +14,15 @@ spec:
 #    data: base64encode
 
   replicas: 1
-
+  # volumeClaimTemplate:
+  #   metadata:
+  #    name: sample
+  #   spec:
+  #     accessModes:
+  #     - ReadWriteMany
+  #     resources:
+  #       requests:
+  #         storage: 2Gi
   ekuiper:
     name: "ekuiper"
     image: lfedge/ekuiper:1.7-slim-python

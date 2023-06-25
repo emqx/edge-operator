@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	"github.com/emqx/edge-operator/internal"
 	appsv1 "k8s.io/api/apps/v1"
@@ -83,7 +84,20 @@ func getPodSpec(instance edgev1alpha1.EdgeInterface) corev1.PodSpec {
 	structAssign(podSpec, &edgePodSpec)
 
 	vols := getVolumeList(instance)
+
+	existVolum := func(name string) bool {
+		for _, volume := range podSpec.Volumes {
+			if volume.Name == name {
+				return true
+			}
+		}
+		return false
+	}
+
 	for i := range vols {
+		if existVolum(vols[i].name) {
+			continue
+		}
 		podSpec.Volumes = append(podSpec.Volumes, corev1.Volume{
 			Name:         vols[i].name,
 			VolumeSource: vols[i].volumeSource,
@@ -129,6 +143,7 @@ func appendVolumeMount(container *corev1.Container, mount mountTo, vols []volume
 				Name:      vols[i].name,
 				MountPath: attr.path,
 				ReadOnly:  attr.readOnly,
+				SubPath:   attr.subPath,
 			})
 		}
 	}

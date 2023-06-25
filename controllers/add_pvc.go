@@ -55,7 +55,7 @@ func addPVC(ctx context.Context, r *EdgeController, ins edgev1alpha1.EdgeInterfa
 		}
 		template := ins.GetVolumeClaimTemplate()
 		pvc := &corev1.PersistentVolumeClaim{
-			ObjectMeta: internal.GetObjectMetadata(template, internal.GetResNameOnPanic(template, vols[i].name)),
+			ObjectMeta: internal.GetObjectMetadata(template, vols[i].volumeSource.PersistentVolumeClaim.ClaimName),
 			Spec:       template.Spec,
 		}
 

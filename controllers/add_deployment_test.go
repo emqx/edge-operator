@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"fmt"
+	"math/rand"
+
 	edgev1alpha1 "github.com/emqx/edge-operator/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -9,7 +11,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"math/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -60,7 +61,16 @@ var _ = Describe("add deployment", func() {
 
 			Expect(k8sClient.Create(ctx, ins)).Should(Succeed())
 
-			expectedVolumes := getVolumeList(ins)
+			volumeList := getVolumeList(ins)
+			expectedVolumes := []volumeInfo{}
+
+			existVolume := map[string]struct{}{}
+			for _, volume := range volumeList {
+				if _, ok := existVolume[volume.name]; !ok {
+					expectedVolumes = append(expectedVolumes, volume)
+					existVolume[volume.name] = struct{}{}
+				}
+			}
 
 			deployment := &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
